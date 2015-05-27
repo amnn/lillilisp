@@ -1,0 +1,66 @@
+require 'spec_helper'
+require 'tokenizer'
+
+def tok(type, val = nil)
+  Tokenizer::Token[type, val]
+end
+
+def tokenize(input)
+  Tokenizer.new(input).to_a
+end
+
+def tok_test(input, tok, name = input)
+  context "when fed #{name}" do
+    subject { tokenize(input) }
+    it "outputs #{name} token" do
+      is_expected.to eq([tok])
+    end
+  end
+end
+
+RSpec.describe Tokenizer do
+  tok_test("(",   tok(:BRA),       "open bracket")
+  tok_test(")",   tok(:KET),       "close bracket")
+  tok_test("1",   tok(:NUM, 1),    "one")
+  tok_test("+12", tok(:NUM, 12),   "positive number")
+  tok_test("-23", tok(:NUM, -23),  "negative number")
+
+  tok_test("foo", tok(:SYM, :foo), "symbol")
+  tok_test("+",   tok(:SYM, :+),   "funky symbol")
+
+  tok_test("my-var-name", tok(:SYM, :"my-var-name"), "kebab case")
+  tok_test("var-1",       tok(:SYM, :"var-1"),       "symbol with number")
+
+  describe "symbol" do
+    it "is terminated by whitespace and comments" do
+      expect(tokenize("hello wor;; comment\nld"))
+        .to eq([tok(:SYM, :hello), tok(:SYM, :wor), tok(:SYM, :ld)])
+    end
+  end
+
+  describe "sequences" do
+    let(:toks) { [tok(:SYM, :foo), tok(:SYM, :bar)] }
+
+    it "brackets can appear immediately before or after another token" do
+      expect(tokenize("(foo 1)"))
+        .to eq([tok(:BRA), tok(:SYM, :foo), tok(:NUM, 1), tok(:KET)])
+    end
+
+    it "treats spaces as whitespace" do
+      expect(tokenize("foo bar")).to eq(toks)
+      expect(tokenize("foo\nbar")).to eq(toks)
+    end
+
+    it "treats commas as whitespace" do
+      expect(tokenize("foo,bar")).to eq(toks)
+    end
+  end
+
+  describe "comments" do
+    let(:input)  { "foo ;; comment\n bar" }
+    let(:output) { [tok(:SYM, :foo), tok(:SYM, :bar)] }
+    it "kills comments to the end of the line" do
+      expect(tokenize(input)).to eq(output)
+    end
+  end
+end
