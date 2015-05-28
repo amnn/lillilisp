@@ -5,6 +5,10 @@ def tok(type, val = nil)
   Tokenizer::Token[type, val]
 end
 
+def sym_list(*syms)
+  syms.map { |s| tok(:SYM, s) }
+end
+
 def tokenize(input)
   Tokenizer.new(input).to_a
 end
@@ -34,12 +38,12 @@ RSpec.describe Tokenizer do
   describe "symbol" do
     it "is terminated by whitespace and comments" do
       expect(tokenize("hello wor;; comment\nld"))
-        .to eq([tok(:SYM, :hello), tok(:SYM, :wor), tok(:SYM, :ld)])
+        .to eq(sym_list(:hello, :wor, :ld))
     end
   end
 
   describe "sequences" do
-    let(:toks) { [tok(:SYM, :foo), tok(:SYM, :bar)] }
+    let(:toks) { sym_list(:foo, :bar) }
 
     it "brackets can appear immediately before or after another token" do
       expect(tokenize("(foo 1)"))
@@ -58,7 +62,7 @@ RSpec.describe Tokenizer do
 
   describe "comments" do
     let(:input)  { "foo ;; comment\n bar" }
-    let(:output) { [tok(:SYM, :foo), tok(:SYM, :bar)] }
+    let(:output) { sym_list(:foo, :bar) }
     it "kills comments to the end of the line" do
       expect(tokenize(input)).to eq(output)
     end
