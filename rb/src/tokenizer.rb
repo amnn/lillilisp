@@ -16,14 +16,16 @@ class Tokenizer
         @input.slice!(/\A.*$/)
       when /\A\(/
         @input.slice!(0)
-        yield Token[:BRA, nil]
+        yield Token[:BRA]
       when /\A\)/
         @input.slice!(0)
-        yield Token[:KET, nil]
+        yield Token[:KET]
       when /\A[+-]?[0-9]/
-        yield Token[:NUM, @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i]
+        num = @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i
+        yield Token[:NUM, num]
       else
-        yield Token[:SYM, @input.slice!(/\A.[^\s,;]*/i).to_sym]
+        sym = @input.slice!(/\A.[^\s,;]*/i).to_sym
+        yield Token[:SYM, sym]
       end
     end
   end
