@@ -24,7 +24,7 @@ class Tokenizer
         num = @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i
         yield Token[:NUM, num]
       else
-        sym = @input.slice!(/\A.[^\s,;]*/i).to_sym
+        sym = @input.slice!(/\A.[^\s,;()]*/i).to_sym
         yield Token[:SYM, sym]
       end
     end

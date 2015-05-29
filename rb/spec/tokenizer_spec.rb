@@ -29,6 +29,13 @@ RSpec.describe Tokenizer do
       expect(tokenize("hello wor;; comment\nld"))
         .to eq(sym_list(:hello, :wor, :ld))
     end
+
+    it "is terminated by opening and closing brackets" do
+      expect(tokenize("foo(bar)baz"))
+        .to eq([tok(:SYM, :foo),
+                tok(:BRA), tok(:SYM, :bar), tok(:KET),
+                tok(:SYM, :baz)])
+    end
   end
 
   describe "sequences" do
@@ -37,6 +44,9 @@ RSpec.describe Tokenizer do
     it "brackets can appear immediately before or after another token" do
       expect(tokenize("(foo 1)"))
         .to eq([tok(:BRA), tok(:SYM, :foo), tok(:NUM, 1), tok(:KET)])
+
+      expect(tokenize("(1 foo)"))
+        .to eq([tok(:BRA), tok(:NUM, 1), tok(:SYM, :foo), tok(:KET)])
     end
 
     it "treats spaces as whitespace" do
