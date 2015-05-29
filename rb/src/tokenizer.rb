@@ -3,6 +3,10 @@ class Tokenizer
 
   Token = Struct.new(:type, :val)
 
+  def self.stream(input)
+    Tokenizer.new(input).enum_for(:each)
+  end
+
   def initialize(input)
     @input = input
   end
