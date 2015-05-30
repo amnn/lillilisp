@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'tok_helper'
 require 'parse_helper'
 require 'value_helper'
