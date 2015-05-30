@@ -1,22 +1,27 @@
 require 'spec_helper'
 require 'tok_helper'
 require 'parse_helper'
+require 'value_helper'
 require 'parser'
 
 RSpec.describe Parser do
+  include TokHelper
+  include ParseHelper
+  include ValueHelper
+
   it "parses symbols" do
     expect(parser(tok(:SYM, :foo)).parse)
-      .to eq(ast(:SYM, :foo))
+      .to eq(sym(:foo))
   end
 
   it "parses numbers" do
     expect(parser(tok(:NUM, 1)).parse)
-      .to eq(ast(:NUM, 1))
+      .to eq(int(1))
   end
 
   it "parses s-expressions" do
     expect(parser(tok(:BRA), tok(:SYM, :foo), tok(:SYM, :bar), tok(:KET)).parse)
-      .to eq(ast(:SEXP, [ast(:SYM, :foo), ast(:SYM, :bar)]))
+      .to eq(sexp(sym(:foo), sym(:bar)))
   end
 
   it "parses nested s-expressions" do
@@ -28,9 +33,7 @@ RSpec.describe Parser do
                   tok(:KET)
                  ).parse
 
-    expect(expr).to eq(ast(:SEXP, [ast(:SEXP, [ast(:SYM, :foo),
-                                               ast(:SYM, :bar)]),
-                                   ast(:SYM, :baz)]))
+    expect(expr).to eq(sexp(sexp(sym(:foo), sym(:bar)), sym(:baz)))
   end
 
   context "when given too little input" do

@@ -1,6 +1,6 @@
-class Parser
-  AST = Struct.new(:type, :val)
+require 'value'
 
+class Parser
   def initialize(tokens)
     @tokens = tokens
   end
@@ -9,9 +9,9 @@ class Parser
     tok = @tokens.next
     case tok.type
     when :NUM
-      AST[:NUM, tok.val]
+      Value::Int.new(tok.val)
     when :SYM
-      AST[:SYM, tok.val]
+      Value::Sym.new(tok.val)
     when :BRA
       parseList
     else
@@ -36,7 +36,7 @@ class Parser
     end
     @tokens.next # Consume KET
 
-    AST[:SEXP, list]
+    Value.sexp(list)
   rescue StopIteration
     raise ArgumentError, "Oops: Not enough input"
   end

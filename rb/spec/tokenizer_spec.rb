@@ -2,6 +2,8 @@ require 'spec_helper'
 require 'tok_helper'
 require 'tokenizer'
 
+include TokHelper
+
 def tok_test(input, tok, name = input)
   context "when fed #{name}" do
     subject { tokenize(input) }
