@@ -5,7 +5,9 @@ RSpec.describe Environment do
 
   describe "#define" do
     it "adds a value to the symbol table" do
-      expect(subject.lookup(:foo)).to be_nil
+      expect { subject.lookup(:foo) }
+        .to raise_error(Environment::SymbolError)
+
       subject.define(:foo, 1)
       expect(subject.lookup(:foo)).to eq(1)
     end
@@ -27,8 +29,9 @@ RSpec.describe Environment do
   end
 
   describe "#lookup" do
-    it "returns nil if the symbol does not exist" do
-      expect(subject.lookup(:foo)).to be_nil
+    it "throws an error if the symbol does not exist" do
+      expect { subject.lookup(:foo) }
+        .to raise_error(Environment::SymbolError)
     end
 
     it "searches through all scopes" do
@@ -71,7 +74,8 @@ RSpec.describe Environment do
         subject.define(:foo, 1)
         subject.pop
 
-        expect(subject.lookup(:foo)).to be_nil
+        expect { subject.lookup(:foo) }
+          .to raise_error(Environment::SymbolError)
       end
     end
   end

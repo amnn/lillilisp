@@ -1,6 +1,8 @@
 require 'value'
 
 class Parser
+  class ParseError < StandardError; end
+
   def initialize(tokens)
     @tokens = tokens
   end
@@ -15,7 +17,7 @@ class Parser
     when :BRA
       parseList
     else
-      raise ArgumentError, "Oops: Unexpected Token: #{tok}"
+      raise ParseError, "Oops: Unexpected Token: #{tok}"
     end
   rescue StopIteration
     nil
@@ -36,8 +38,8 @@ class Parser
     end
     @tokens.next # Consume KET
 
-    Value.sexp(list)
+    Value.to_sexp(list)
   rescue StopIteration
-    raise ArgumentError, "Oops: Not enough input"
+    raise ParseError, "Oops: Not enough input"
   end
 end

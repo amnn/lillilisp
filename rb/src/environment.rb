@@ -1,4 +1,6 @@
 class Environment
+  class SymbolError < StandardError; end
+
   def initialize
     @root = Scope[{}]
     @root.parent = @root
@@ -14,6 +16,7 @@ class Environment
         return map[sym]
       end
     end
+    raise SymbolError, "No value for symbol >>> #{sym} <<<"
   end
 
   def push

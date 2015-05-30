@@ -38,7 +38,7 @@ RSpec.describe Parser do
   context "when given too little input" do
     it "throws an error" do
       expect { parser(tok(:BRA)).parse }
-        .to raise_error(ArgumentError)
+        .to raise_error(Parser::ParseError)
     end
   end
 
