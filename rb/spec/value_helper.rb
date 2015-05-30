@@ -10,6 +10,6 @@ module ValueHelper
   end
 
   def sexp(*vals)
-    Value.sexp(vals)
+    Value.to_sexp(vals)
   end
 end
