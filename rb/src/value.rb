@@ -1,6 +1,15 @@
 module Value
-  Int   = Struct.new(:val)
-  Sym   = Struct.new(:name)
+  class Int < Struct.new(:val)
+    def to_s
+      val.to_s
+    end
+  end
+
+  class Sym < Struct.new(:name)
+    def to_s
+      name.to_s
+    end
+  end
 
   class Callable < Struct.new(:env, :params, :rest, :body)
     def initialize(env, expr)
@@ -13,6 +22,11 @@ module Value
           e.eval(env, expr)
         end
       end
+    end
+
+    protected
+    def params_to_s
+      params.join(' ') + (rest ? " & #{rest}" : "")
     end
 
     private
@@ -37,14 +51,27 @@ module Value
     end
   end
 
-  class Fn < Callable; end
-  class Macro < Callable; end
+  class Fn < Callable
+    def to_s
+      "fn(#{params_to_s})"
+    end
+  end
+
+  class Macro < Callable
+    def to_s
+      "macro(#{params_to_s})"
+    end
+  end
 
   Nil = Object.new
   Nil.extend(Enumerable)
   def Nil.each; end
   def Nil.to_a
     []
+  end
+
+  def Nil.to_s
+    "'()"
   end
 
   class Cons < Struct.new(:head, :tail)
@@ -60,6 +87,14 @@ module Value
     def to_a
       enum_for(:each).to_a
     end
+
+    def to_s
+      if Value.nil_terminated?(self)
+        "'(#{enum_for(:each).to_a.join(' ')})"
+      else
+        "'(#{head} . #{tail})"
+      end
+    end
   end
 
   def self.to_sexp(list)
@@ -70,5 +105,18 @@ module Value
 
   def self.sexp?(val)
     val.is_a?(Cons) || val.equal?(Nil)
+  end
+
+  def self.nil_terminated?(list)
+    loop do
+      case list
+      when Nil
+        return true
+      when Cons
+        list = list.tail
+      else
+        return false
+      end
+    end
   end
 end
