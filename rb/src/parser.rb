@@ -19,7 +19,7 @@ class Parser
     when :BRA
       parseList
     else
-      raise ParseError, "Oops: Unexpected Token: #{tok}"
+      raise ParseError, "Unexpected Token `#{tok}`."
     end
   rescue StopIteration
     nil
@@ -33,7 +33,7 @@ class Parser
 
   private
   def enquote(expr)
-    raise "Oops: Not enough input" unless expr
+    raise "Not enough input `(quote\u2026`." unless expr
     Value.to_sexp([Value::Sym[:quote], expr])
   end
 
@@ -47,6 +47,6 @@ class Parser
 
     Value.to_sexp(list)
   rescue StopIteration
-    raise ParseError, "Oops: Not enough input"
+    raise ParseError, "Not enough input `(#{list.join(' ')}\u2026`."
   end
 end

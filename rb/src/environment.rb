@@ -24,7 +24,7 @@ class Environment
         return map[sym]
       end
     end
-    raise SymbolError, "No value for symbol >>> #{sym} <<<"
+    raise SymbolError, "Undefined symbol `#{sym}`"
   end
 
   def push

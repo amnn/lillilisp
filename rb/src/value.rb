@@ -36,7 +36,8 @@ module Value
       _, rest, e = arg_names.drop_while { |n| n != :& }
 
       if e || rest == :&
-        raise Evaluator::SyntaxError, "Badly formed argument list"
+        raise Evaluator::SyntaxError, "Badly formed argument list `\u2026&"\
+                                      "#{[rest, e].compact.join(' ')})`."
       end
 
       [params, rest]

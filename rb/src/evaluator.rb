@@ -13,9 +13,9 @@ class Evaluator
     when Value::Cons
       eval_sexp(env, expr)
     when Value::Nil
-      raise SyntaxError, "Empty function application! (wat?)"
+      raise EvalError, "Empty function application! (wat?)"
     else
-      raise SyntaxError, "Don't know what to do with AST >>> #{expr} <<<"
+      raise SyntaxError, "Don't know what to do with AST `#{expr}`"
     end
   end
 
@@ -96,24 +96,29 @@ class Evaluator
     end
 
     def validate_len(len, keyword, expr)
-      unless expr.to_a.count == len
-        raise SyntaxError, "#{keyword} expects #{len} parts"
+      actual = expr.to_a.count
+      unless actual == len
+        raise SyntaxError, "`#{keyword}` wrong number of parts "\
+                           "(#{actual} for #{len})."
       end
     end
 
     def validate_min_len(min_len, keyword, expr)
-      unless expr.to_a.count >= min_len
-        raise SyntaxError, "#{keyword} expects at-least #{min_len} parts"
+      actual = expr.to_a.count
+      unless actual >= min_len
+        raise SyntaxError, "`#{keyword}` wrong number of parts "\
+                           "(#{actual} for #{min_len}+)."
       end
     end
 
     def validate_arg_list(args)
       unless Value.sexp? args
-        raise SyntaxError, "No arg-list provided!"
+        raise SyntaxError, "Expected argument list, received `#{args}`."
       end
 
-      unless args.all? { |v| v.is_a? Value::Sym }
-        raise SyntaxError, "Bad arg-list"
+      not_sym = args.reject { |v| v.is_a? Value::Sym }.first
+      if not_sym
+        raise SyntaxError, "Found `#{not_sym}` (not a symbol) in argument list."
       end
     end
 
@@ -124,8 +129,9 @@ class Evaluator
 
     def validate_def(expr)
       validate_len(2, "def", expr)
-      unless expr.head.is_a? Value::Sym
-        raise SyntaxError, "Variable name is not a symbol"
+      name = expr.head
+      unless name.is_a? Value::Sym
+        raise SyntaxError, "`def` expects a symbol, received `#{name}`."
       end
     end
   end

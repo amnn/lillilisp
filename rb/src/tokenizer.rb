@@ -1,7 +1,11 @@
 class Tokenizer
   include Enumerable
 
-  Token = Struct.new(:type, :val)
+  class Token < Struct.new(:type, :val)
+    def to_s
+      type.to_s + (val ? "[#{val}]" : "")
+    end
+  end
 
   def self.stream(input)
     Tokenizer.new(input).enum_for(:each)
