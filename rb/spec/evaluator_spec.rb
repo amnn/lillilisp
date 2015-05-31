@@ -25,14 +25,45 @@ RSpec.describe Evaluator do
         expect(e.eval(env, expr)).to eq(t_pt)
       end
     end
+
+    context "when there are fewer than 3 sub-expressions" do
+      let(:expr) { sexp(sym(:if), int(1)) }
+      it "throws an error" do
+        expect { e.eval(env, expr) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there are more than 3 sub-expressions" do
+      let(:expr) { sexp(sym(:if), int(1), t_pt, e_pt, t_pt) }
+      it "throws an error" do
+        expect { e.eval(env, expr) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
   end
 
   describe "quote" do
     let(:expr) { sexp(sym(:fn), sexp(sym(:x)), sym(:x)) }
     let(:quoted) { sexp(sym(:quote), expr) }
-
     it "promotes the AST of its parameter to a value" do
       expect(e.eval(env, quoted)).to eq(expr)
+    end
+
+    context "when there is no parameter" do
+      let(:quoted) { sexp(sym(:quote)) }
+      it "throws an error" do
+        expect { e.eval(env, quoted) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there is more than one parameter" do
+      let(:quoted) { sexp(sym(:quote), expr, expr) }
+      it "throws an error" do
+        expect { e.eval(env, quoted) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
     end
   end
 
@@ -52,6 +83,57 @@ RSpec.describe Evaluator do
       e.eval(env, def_1)
       e.eval(env, def_2)
       expect(e.eval(env, var)).to eq(val_2)
+    end
+
+    context "when there are fewer than 2 parameters" do
+      let(:e_def) { sexp(sym(:def), var) }
+      it "throws an error" do
+        expect { e.eval(env, e_def) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there are more than 2 parameters" do
+      let(:e_def) { sexp(sym(:def), var, val_1, val_1) }
+      it "throws an error" do
+        expect { e.eval(env, e_def) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+  end
+
+  shared_examples_for "a callable" do |kw|
+    let(:ident) { sym(kw) }
+    context "when there are no args or body" do
+      let(:no_args_body) { sexp(ident) }
+      it "throws an error" do
+        expect { e.eval(env, no_args_body) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there are no args" do
+      let(:no_args) { sexp(ident, int(1)) }
+      it "throws an error" do
+        expect { e.eval(env, no_args) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there is no body" do
+      let(:no_body) { sexp(ident, sexp()) }
+      it "throws an error" do
+        expect { e.eval(env, no_body) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there are non-symbols in the arg-list" do
+      let(:bad_args) { sexp(ident, sexp(int(1)), int(1)) }
+      it "throws an error" do
+        expect { e.eval(env, bad_args) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
     end
   end
 
@@ -77,6 +159,8 @@ RSpec.describe Evaluator do
     it "shadows environment variables" do
       expect(e.eval(env, sexp(shadow, int(2)))).to eq(int(2))
     end
+
+    it_behaves_like "a callable", :fn
   end
 
   describe "macro" do
@@ -97,5 +181,7 @@ RSpec.describe Evaluator do
     it "is applied before (runtime) evaluation" do
       expect(e.eval(env, sexp(inject, int(1)))).to eq(val)
     end
+
+    it_behaves_like "a callable", :macro
   end
 end
