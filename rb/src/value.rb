@@ -5,13 +5,11 @@ module Value
   class Callable < Struct.new(:env, :params, :rest, :body)
     def initialize(env, expr)
       super(env.clone, *formal_params(expr.head), expr.tail)
-      puts "Callable created with p: #{params}, r: #{rest}"
     end
 
     def apply(e, args)
       env.elaborate(actual_params(args)) do
         body.reduce(nil) do |_, expr|
-          puts "evaluating #{expr}"
           e.eval(env, expr)
         end
       end
@@ -34,7 +32,6 @@ module Value
       Hash[params.zip(vals)].tap do |args|
         if rest
           args[rest] = Value.to_sexp(vals.drop(args.count))
-          puts args
         end
       end
     end
