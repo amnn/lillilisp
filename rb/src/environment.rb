@@ -10,11 +10,12 @@ class Environment
     @root.map[sym] = val
   end
 
-  def elaborate(kvps)
+  def elaborate(kvps) #+yields
     push
     kvps.each do |k, v|
       define(k, v)
     end
+    ret = yield; pop; ret
   end
 
   def lookup(sym)

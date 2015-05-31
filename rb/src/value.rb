@@ -1,8 +1,47 @@
 module Value
   Int   = Struct.new(:val)
   Sym   = Struct.new(:name)
-  Fn    = Struct.new(:block)
-  Macro = Struct.new(:block)
+
+  class Callable < Struct.new(:env, :params, :rest, :body)
+    def initialize(env, expr)
+      super(env.clone, *formal_params(expr.head), expr.tail)
+      puts "Callable created with p: #{params}, r: #{rest}"
+    end
+
+    def apply(e, args)
+      env.elaborate(actual_params(args)) do
+        body.reduce(nil) do |_, expr|
+          puts "evaluating #{expr}"
+          e.eval(env, expr)
+        end
+      end
+    end
+
+    private
+    def formal_params(args)
+      arg_names  = args.map(&:name)
+      params     = arg_names.take_while { |n| n != :& }
+      _, rest, e = arg_names.drop_while { |n| n != :& }
+
+      if e || rest == :&
+        raise Evaluator::SyntaxError, "Badly formed argument list"
+      end
+
+      [params, rest]
+    end
+
+    def actual_params(vals)
+      Hash[params.zip(vals)].tap do |args|
+        if rest
+          args[rest] = Value.to_sexp(vals.drop(args.count))
+          puts args
+        end
+      end
+    end
+  end
+
+  class Fn < Callable; end
+  class Macro < Callable; end
 
   Nil = Object.new
   Nil.extend(Enumerable)

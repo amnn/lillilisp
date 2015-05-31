@@ -16,6 +16,7 @@ RSpec.describe Tokenizer do
   tok_test("(",   tok(:BRA),       "open bracket")
   tok_test(")",   tok(:KET),       "close bracket")
   tok_test("'",   tok(:QUOT),      "quote")
+  tok_test("&",   tok(:SYM, :&),   "rest indicator")
   tok_test("1",   tok(:NUM, 1),    "one")
   tok_test("+12", tok(:NUM, 12),   "positive number")
   tok_test("-23", tok(:NUM, -23),  "negative number")
@@ -37,6 +38,16 @@ RSpec.describe Tokenizer do
         .to eq([tok(:SYM, :foo),
                 tok(:BRA), tok(:SYM, :bar), tok(:KET),
                 tok(:SYM, :baz)])
+    end
+
+    it "is termianted by the quote" do
+      expect(tokenize("foo'bar"))
+        .to eq([tok(:SYM, :foo), tok(:QUOT), tok(:SYM, :bar)])
+
+    end
+    it "is termianted by the rest parameter" do
+      expect(tokenize("foo&bar"))
+        .to eq([tok(:SYM, :foo), tok(:SYM, :&), tok(:SYM, :bar)])
     end
   end
 

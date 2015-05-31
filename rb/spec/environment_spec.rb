@@ -35,17 +35,18 @@ RSpec.describe Environment do
       kvps.each do |k, v|
         subject.define(k, -1*v)
       end
-      subject.elaborate(kvps)
     end
 
     it "assigns values to symbols" do
-      kvps.each do |k, v|
-        expect(subject.lookup(k)).to eq(v)
+      subject.elaborate(kvps) do
+        kvps.each do |k, v|
+          expect(subject.lookup(k)).to eq(v)
+        end
       end
     end
 
-    it "assigns them in a new scope" do
-      subject.pop
+    it "assigns them in a new scope, which is popped on exit" do
+      subject.elaborate(kvps) {}
       kvps.each do |k, v|
         expect(subject.lookup(k)).to eq(-1*v)
       end

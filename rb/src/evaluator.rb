@@ -35,9 +35,9 @@ class Evaluator
   def eval_callable(callable, env, body)
     case callable
     when Value::Fn
-      callable.block[*body.map { |e| eval(env, e) }]
+      callable.apply(self, body.map { |e| eval(env, e) })
     when Value::Macro
-      eval(env, callable.block[*body])
+      eval(env, callable.apply(self, body.to_a))
     else
       raise EvalError, "#{callable} not callable!"
     end
@@ -66,12 +66,12 @@ class Evaluator
 
     def eval_fn(env, body)
       validate_abstraction(body, "fn")
-      Value::Fn[abstract(env, body)]
+      Value::Fn.new(env, body)
     end
 
     def eval_macro(env, body)
       validate_abstraction(body, "macro")
-      Value::Macro[abstract(env, body)]
+      Value::Macro.new(env, body)
     end
 
     def eval_def(env, body)
@@ -95,19 +95,6 @@ class Evaluator
       body.head
     end
 
-    def abstract(env, expr)
-      args = expr.head.map(&:name)
-      body = expr.tail
-      closure = env.clone
-
-      ->(*vals) {
-        closure.elaborate(Hash[args.zip(vals)])
-        body.reduce(nil) do |_, e|
-          @e.eval(closure, e)
-        end
-      }
-    end
-
     def validate_len(len, keyword, expr)
       unless expr.to_a.count == len
         raise SyntaxError, "#{keyword} expects #{len} parts"
@@ -120,16 +107,19 @@ class Evaluator
       end
     end
 
-    def validate_abstraction(expr, part)
-      validate_min_len(2, part, expr)
-
-      unless Value.sexp? expr.head
+    def validate_arg_list(args)
+      unless Value.sexp? args
         raise SyntaxError, "No arg-list provided!"
       end
 
-      unless expr.head.all? { |v| v.is_a? Value::Sym }
+      unless args.all? { |v| v.is_a? Value::Sym }
         raise SyntaxError, "Bad arg-list"
       end
+    end
+
+    def validate_abstraction(expr, part)
+      validate_min_len(2, part, expr)
+      validate_arg_list(expr.head)
     end
 
     def validate_def(expr)

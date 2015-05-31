@@ -104,6 +104,7 @@ RSpec.describe Evaluator do
 
   shared_examples_for "a callable" do |kw|
     let(:ident) { sym(kw) }
+
     context "when there are no args or body" do
       let(:no_args_body) { sexp(ident) }
       it "throws an error" do
@@ -116,6 +117,22 @@ RSpec.describe Evaluator do
       let(:no_args) { sexp(ident, int(1)) }
       it "throws an error" do
         expect { e.eval(env, no_args) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there are multiple rest symbols" do
+      let(:mult_rest) { sexp(ident, sexp(sym(:&), sym(:&)), int(1)) }
+      it "throws an error" do
+        expect { e.eval(env, mult_rest) }
+          .to raise_error(Evaluator::SyntaxError)
+      end
+    end
+
+    context "when there are multiple rest params" do
+      let(:mult_rest_p) { sexp(ident, sexp(sym(:&), sym(:x), sym(:y)), int(1)) }
+      it "throws an error" do
+        expect { e.eval(env, mult_rest_p) }
           .to raise_error(Evaluator::SyntaxError)
       end
     end
@@ -158,6 +175,22 @@ RSpec.describe Evaluator do
 
     it "shadows environment variables" do
       expect(e.eval(env, sexp(shadow, int(2)))).to eq(int(2))
+    end
+
+    context "rest parameter" do
+      let(:with_rest) { sexp(sym(:fn), sexp(sym(:&), sym(:rest)), sym(:rest)) }
+      it "captures the rest of the arguments" do
+        expect(e.eval(env, sexp(with_rest, int(1))))
+          .to eq(sexp(int(1)))
+      end
+
+      context "when the rest is empty" do
+        let(:empty_rest) { sexp(sym(:fn), sexp(sym(:x), sym(:&)), sym(:x)) }
+        it "is ignored" do
+          expect(e.eval(env, sexp(empty_rest, int(1))))
+            .to eq(int(1))
+        end
+      end
     end
 
     it_behaves_like "a callable", :fn

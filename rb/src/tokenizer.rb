@@ -27,11 +27,14 @@ class Tokenizer
       when /\A\'/
         @input.slice!(0)
         yield Token[:QUOT]
+      when /\A\&/
+        @input.slice!(0)
+        yield Token[:SYM, :&]
       when /\A[+-]?[0-9]/
         num = @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i
         yield Token[:NUM, num]
       else
-        sym = @input.slice!(/\A.[^\s,;()]*/i).to_sym
+        sym = @input.slice!(/\A.[^\s,;()'&]*/i).to_sym
         yield Token[:SYM, sym]
       end
     end

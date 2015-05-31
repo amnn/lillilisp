@@ -34,7 +34,7 @@ class Parser
   private
   def enquote(expr)
     raise "Oops: Not enough input" unless expr
-    Value.to_sexp([Value::Sym.new(:quote), expr])
+    Value.to_sexp([Value::Sym[:quote], expr])
   end
 
   def parseList
