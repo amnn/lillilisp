@@ -24,6 +24,9 @@ class Tokenizer
       when /\A\)/
         @input.slice!(0)
         yield Token[:KET]
+      when /\A\'/
+        @input.slice!(0)
+        yield Token[:QUOT]
       when /\A[+-]?[0-9]/
         num = @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i
         yield Token[:NUM, num]

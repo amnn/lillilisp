@@ -15,6 +15,7 @@ end
 RSpec.describe Tokenizer do
   tok_test("(",   tok(:BRA),       "open bracket")
   tok_test(")",   tok(:KET),       "close bracket")
+  tok_test("'",   tok(:QUOT),      "quote")
   tok_test("1",   tok(:NUM, 1),    "one")
   tok_test("+12", tok(:NUM, 12),   "positive number")
   tok_test("-23", tok(:NUM, -23),  "negative number")

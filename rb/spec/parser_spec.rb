@@ -23,6 +23,20 @@ RSpec.describe Parser do
       .to eq(sexp(sym(:foo), sym(:bar)))
   end
 
+  describe "quoting" do
+    it "wraps symbols" do
+      expect(parser(tok(:QUOT), tok(:SYM, :foo)).parse)
+        .to eq(sexp(sym(:quote), sym(:foo)))
+    end
+
+    it "wraps s-expressions" do
+      expect(parser(tok(:QUOT), tok(:BRA),
+                    tok(:SYM, :foo), tok(:SYM, :bar),
+                    tok(:KET)).parse)
+        .to eq(sexp(sym(:quote), sexp(sym(:foo), sym(:bar))))
+    end
+  end
+
   it "parses nested s-expressions" do
     expr = parser(tok(:BRA),
                   tok(:BRA),

@@ -14,6 +14,8 @@ class Parser
       Value::Int.new(tok.val)
     when :SYM
       Value::Sym.new(tok.val)
+    when :QUOT
+      enquote parse
     when :BRA
       parseList
     else
@@ -30,6 +32,11 @@ class Parser
   end
 
   private
+  def enquote(expr)
+    raise "Oops: Not enough input" unless expr
+    Value.to_sexp([Value::Sym.new(:quote), expr])
+  end
+
   def parseList
     list = []
 
