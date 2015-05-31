@@ -1,4 +1,5 @@
 require 'value_helper'
+require 'environment'
 require 'evaluator'
 
 RSpec.describe Evaluator do

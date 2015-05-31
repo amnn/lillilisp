@@ -20,36 +20,12 @@ class Evaluator
   end
 
   private
-  def kw(sym)
-    (@kw ||= {})[sym] ||= Value::Sym.new(sym)
-  end
-
   def eval_sexp(env, expr)
     oper = expr.head
     body = expr.tail
 
-    case oper
-    when kw(:fn)
-      validate_abstraction(body, "fn")
-      Value::Fn[abstract(env, body)]
-    when kw(:macro)
-      validate_abstraction(body, "macro")
-      Value::Macro[abstract(env, body)]
-    when kw(:def)
-      validate_def(body)
-      sym, init = body.to_a
-      env.define(sym.name, eval(env, init))
-    when kw(:if)
-      validate_len(3, "if", body)
-      c_expr, t_expr, e_expr = body.to_a
-      if eval(env, c_expr) == Value::Nil
-        eval(env, e_expr)
-      else
-        eval(env, t_expr)
-      end
-    when kw(:quote)
-      validate_len(1, "quote", body)
-      body.head
+    if kw.handles?(oper)
+      kw.__eval(oper, env, body)
     else
       callable = eval(env, oper)
       case callable
@@ -63,52 +39,104 @@ class Evaluator
     end
   end
 
-  def abstract(env, expr)
-    args = expr.head.map(&:name)
-    body = expr.tail
-    closure = env.clone
+  def kw
+    @kw ||= KeywordHandler.new(self)
+  end
 
-    ->(*vals) {
-      closure.push
-      args.zip(vals).each do |a, v|
-        closure.define(a, v)
+  class KeywordHandler
+    def initialize(evaluator)
+      @e = evaluator
+    end
+
+    def kw_method(s)
+      "eval_#{s.name}"
+    end
+
+    def handles?(sym)
+      sym.is_a?(Value::Sym) && respond_to?(kw_method(sym))
+    end
+
+    def __eval(sym, env, body)
+      self.send(kw_method(sym), env, body)
+    end
+
+    def eval_fn(env, body)
+      validate_abstraction(body, "fn")
+      Value::Fn[abstract(env, body)]
+    end
+
+    def eval_macro(env, body)
+      validate_abstraction(body, "macro")
+      Value::Macro[abstract(env, body)]
+    end
+
+    def eval_def(env, body)
+      validate_def(body)
+      sym, init = body.to_a
+      env.define(sym.name, @e.eval(env, init))
+    end
+
+    def eval_if(env, body)
+      validate_len(3, "if", body)
+      c_expr, t_expr, e_expr = body.to_a
+      if @e.eval(env, c_expr) == Value::Nil
+        @e.eval(env, e_expr)
+      else
+        @e.eval(env, t_expr)
+      end
+    end
+
+    def eval_quote(env, body)
+      validate_len(1, "quote", body)
+      body.head
+    end
+
+    def abstract(env, expr)
+      args = expr.head.map(&:name)
+      body = expr.tail
+      closure = env.clone
+
+      ->(*vals) {
+        closure.push
+        args.zip(vals).each do |a, v|
+          closure.define(a, v)
+        end
+
+        body.reduce(nil) do |_, e|
+          @e.eval(closure, e)
+        end
+      }
+    end
+
+    def validate_len(len, keyword, expr)
+      unless expr.to_a.count == len
+        raise SyntaxError, "#{keyword} expects #{len} parts"
+      end
+    end
+
+    def validate_min_len(min_len, keyword, expr)
+      unless expr.to_a.count >= min_len
+        raise SyntaxError, "#{keyword} expects at-least #{min_len} parts"
+      end
+    end
+
+    def validate_abstraction(expr, part)
+      validate_min_len(2, part, expr)
+
+      unless Value.sexp? expr.head
+        raise SyntaxError, "No arg-list provided!"
       end
 
-      body.reduce(nil) do |_, e|
-        eval(closure, e)
+      unless expr.head.all? { |v| v.is_a? Value::Sym }
+        raise SyntaxError, "Bad arg-list"
       end
-    }
-  end
-
-  def validate_len(len, keyword, expr)
-    unless expr.to_a.count == len
-      raise SyntaxError, "#{keyword} expects #{len} parts"
-    end
-  end
-
-  def validate_min_len(min_len, keyword, expr)
-    unless expr.to_a.count >= min_len
-      raise SyntaxError, "#{keyword} expects at-least #{min_len} parts"
-    end
-  end
-
-  def validate_abstraction(expr, part)
-    validate_min_len(2, part, expr)
-
-    unless Value.sexp? expr.head
-      puts expr.head
-      raise SyntaxError, "No arg-list provided!"
     end
 
-    unless expr.head.all? { |v| v.is_a? Value::Sym }
-      raise SyntaxError, "Bad arg-list"
-    end
-  end
-
-  def validate_def(expr)
-    validate_len(2, "def", expr)
-    unless expr.head.is_a? Value::Sym
-      raise SyntaxError, "Variable name is not a symbol"
+    def validate_def(expr)
+      validate_len(2, "def", expr)
+      unless expr.head.is_a? Value::Sym
+        raise SyntaxError, "Variable name is not a symbol"
+      end
     end
   end
 end
