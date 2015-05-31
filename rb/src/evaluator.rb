@@ -27,15 +27,19 @@ class Evaluator
     if kw.handles?(oper)
       kw.__eval(oper, env, body)
     else
-      callable = eval(env, oper)
-      case callable
-      when Value::Fn
-        callable.block[*body.map { |e| eval(env, e) }]
-      when Value::Macro
-        eval(env, callable.block[*body])
-      else
-        raise EvalError, "#{callable} not callable!"
-      end
+      eval_callable(eval(env, oper),
+                    env, body)
+    end
+  end
+
+  def eval_callable(callable, env, body)
+    case callable
+    when Value::Fn
+      callable.block[*body.map { |e| eval(env, e) }]
+    when Value::Macro
+      eval(env, callable.block[*body])
+    else
+      raise EvalError, "#{callable} not callable!"
     end
   end
 
@@ -97,11 +101,7 @@ class Evaluator
       closure = env.clone
 
       ->(*vals) {
-        closure.push
-        args.zip(vals).each do |a, v|
-          closure.define(a, v)
-        end
-
+        closure.elaborate(Hash[args.zip(vals)])
         body.reduce(nil) do |_, e|
           @e.eval(closure, e)
         end

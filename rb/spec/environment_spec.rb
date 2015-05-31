@@ -28,6 +28,30 @@ RSpec.describe Environment do
     end
   end
 
+  describe "#elaborate" do
+    let(:kvps) { {a: 1, b: 2, c: 3} }
+
+    before do
+      kvps.each do |k, v|
+        subject.define(k, -1*v)
+      end
+      subject.elaborate(kvps)
+    end
+
+    it "assigns values to symbols" do
+      kvps.each do |k, v|
+        expect(subject.lookup(k)).to eq(v)
+      end
+    end
+
+    it "assigns them in a new scope" do
+      subject.pop
+      kvps.each do |k, v|
+        expect(subject.lookup(k)).to eq(-1*v)
+      end
+    end
+  end
+
   describe "#lookup" do
     it "throws an error if the symbol does not exist" do
       expect { subject.lookup(:foo) }

@@ -10,6 +10,13 @@ class Environment
     @root.map[sym] = val
   end
 
+  def elaborate(kvps)
+    push
+    kvps.each do |k, v|
+      define(k, v)
+    end
+  end
+
   def lookup(sym)
     @root.each do |map|
       if map.has_key? sym
