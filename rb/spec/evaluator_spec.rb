@@ -162,6 +162,22 @@ RSpec.describe Evaluator do
           .to raise_error(Evaluator::SyntaxError)
       end
     end
+
+    context "when it is applied to too many arguments" do
+      let(:too_many_args) { sexp(sexp(ident, sexp(), int(1)), int(1)) }
+      it "throws an error" do
+        expect { e.eval(env, too_many_args) }
+          .to raise_error(Evaluator::EvalError)
+      end
+    end
+
+    context "when it is applied to too few arguments" do
+      let (:too_few_args) { sexp(sexp(ident, sexp(sym(:x)), int(1))) }
+      it "throws an error" do
+        expect { e.eval(env, too_few_args) }
+          .to raise_error(Evaluator::EvalError)
+      end
+    end
   end
 
   describe "fn" do

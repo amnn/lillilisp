@@ -31,7 +31,17 @@ module Value
       [params, rest]
     end
 
+    def arity_check(vals)
+      actual = vals.size
+      expect = params.size
+      if actual < expect || !rest && actual > expect
+        raise Evaluator::EvalError, "Wrong number of arguments for #{self} "\
+                                    "(#{actual} for #{expect}#{rest ? '+':''})"
+      end
+    end
+
     def actual_params(vals)
+      arity_check vals
       Hash[params.zip(vals)].tap do |args|
         if rest
           args[rest] = Value.to_sexp(vals.drop(args.count))
