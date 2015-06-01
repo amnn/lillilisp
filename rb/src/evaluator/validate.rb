@@ -1,5 +1,5 @@
 class Evaluator
-  class Validator
+  module Validate
     def exact_len?(len, keyword, expr)
       len?(keyword, expr,
            ->(actual) { actual == len },
@@ -28,15 +28,6 @@ class Evaluator
       arg_list? expr.head
     end
 
-    def def?(expr)
-      exact_len? 2, "def", expr
-      name = expr.head
-      unless name.is_a? Value::Sym
-        raise SyntaxError, "`def` expects a symbol, received `#{name}`."
-      end
-    end
-
-    private
     def len?(keyword, expr, test, err) #+yields
       actual = expr.to_a.count
       unless test.(actual)

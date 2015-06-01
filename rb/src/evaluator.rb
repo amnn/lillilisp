@@ -1,6 +1,6 @@
 require 'value'
 require 'error'
-require 'evaluator/keyword_handler'
+require 'evaluator/keyword'
 
 class Evaluator
   EvalError   = LangError.of_type "Runtime"
@@ -28,8 +28,8 @@ class Evaluator
     oper = expr.head
     body = expr.tail
 
-    if kw.handles?(oper)
-      kw.__eval(oper, env, body)
+    if Keyword.handles?(oper)
+      Keyword.eval(self, oper, env, body)
     else
       eval_callable(eval(env, oper),
                     env, body)
@@ -45,9 +45,5 @@ class Evaluator
     else
       raise EvalError, "#{callable} not callable!"
     end
-  end
-
-  def kw
-    @kw ||= KeywordHandler.new(self)
   end
 end
