@@ -1,9 +1,9 @@
-require 'value_helper'
+require 'value'
 require 'environment'
 require 'evaluator'
 
 RSpec.describe Evaluator do
-  include ValueHelper
+  include Value::Helpers
   let(:env)  { Environment.new }
   let(:e)    { Evaluator.new }
 

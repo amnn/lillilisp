@@ -1,12 +1,11 @@
+require 'value'
 require 'tok_helper'
 require 'parse_helper'
-require 'value_helper'
-require 'parser'
 
 RSpec.describe Parser do
   include TokHelper
   include ParseHelper
-  include ValueHelper
+  include Value::Helpers
 
   it "parses symbols" do
     expect(parser(tok(:SYM, :foo)).parse)
