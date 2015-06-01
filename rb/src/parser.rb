@@ -1,7 +1,8 @@
 require 'value'
+require 'error'
 
 class Parser
-  class ParseError < StandardError; end
+  ParseError = LangError.of_type "Parse"
 
   def initialize(tokens)
     @tokens = tokens

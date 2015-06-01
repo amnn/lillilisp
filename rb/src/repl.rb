@@ -4,6 +4,7 @@ require 'evaluator'
 require 'parser'
 require 'tokenizer'
 require 'environment'
+require 'error'
 
 class REPL
   def run
@@ -13,14 +14,8 @@ class REPL
         until p.done?
           puts "--> #{eval(p.parse)}"
         end
-      rescue Evaluator::SyntaxError => se
-        puts "!!! Syntax Error: #{se}"
-      rescue Evaluator::EvalError => ee
-        puts "!!! Runtime Error: #{ee}"
-      rescue Environment::SymbolError => sym_e
-        puts "!!! Symbol Error: #{sym_e}"
-      rescue Parser::ParseError => pe
-        puts "!!! Parse Error: #{pe}"
+      rescue LangError => e
+        puts e
       rescue Interrupt
         puts
       end

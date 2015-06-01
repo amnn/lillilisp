@@ -1,5 +1,7 @@
+require 'error'
+
 class Environment
-  class SymbolError < StandardError; end
+  SymbolError = LangError.of_type "Symbol"
 
   def initialize
     @root = Scope[{}]

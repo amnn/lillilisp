@@ -1,9 +1,10 @@
 require 'value'
+require 'error'
 require 'evaluator/keyword_handler'
 
 class Evaluator
-  class EvalError   < StandardError; end
-  class SyntaxError < StandardError; end
+  EvalError   = LangError.of_type "Runtime"
+  SyntaxError = LangError.of_type "Syntax"
 
   def eval(env, expr)
     case expr
