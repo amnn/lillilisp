@@ -83,7 +83,7 @@ class Evaluator
     end
 
     def eval_if(env, body)
-      validate_len(3, "if", body)
+      validate_exact_len(3, "if", body)
       c_expr, t_expr, e_expr = body.to_a
       if @e.eval(env, c_expr) == Value::Nil
         @e.eval(env, e_expr)
@@ -93,24 +93,28 @@ class Evaluator
     end
 
     def eval_quote(env, body)
-      validate_len(1, "quote", body)
+      validate_exact_len(1, "quote", body)
       body.head
     end
 
-    def validate_len(len, keyword, expr)
+    def validate_len(keyword, expr, test, err) #+yields
       actual = expr.to_a.count
-      unless actual == len
+      unless test.(actual)
         raise SyntaxError, "`#{keyword}` wrong number of parts "\
-                           "(#{actual} for #{len})."
+                           "(#{err.(actual)})."
       end
     end
 
+    def validate_exact_len(len, keyword, expr)
+      validate_len(keyword, expr,
+                   ->(actual) { actual == len },
+                   ->(actual) { "#{actual} for #{len}" })
+    end
+
     def validate_min_len(min_len, keyword, expr)
-      actual = expr.to_a.count
-      unless actual >= min_len
-        raise SyntaxError, "`#{keyword}` wrong number of parts "\
-                           "(#{actual} for #{min_len}+)."
-      end
+      validate_len(keyword, expr,
+                   ->(actual) { actual >= min_len },
+                   ->(actual) { "#{actual} for #{min_len}+" })
     end
 
     def validate_arg_list(args)
@@ -130,7 +134,7 @@ class Evaluator
     end
 
     def validate_def(expr)
-      validate_len(2, "def", expr)
+      validate_exact_len(2, "def", expr)
       name = expr.head
       unless name.is_a? Value::Sym
         raise SyntaxError, "`def` expects a symbol, received `#{name}`."
