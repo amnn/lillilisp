@@ -8,6 +8,8 @@ class Evaluator
     case expr
     when Value::Int
       expr
+    when Value::Str
+      expr
     when Value::Sym
       env.lookup(expr.name)
     when Value::Cons

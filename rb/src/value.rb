@@ -11,6 +11,12 @@ module Value
     end
   end
 
+  class Str < Struct.new(:val)
+    def to_s
+      "\"#{val}\""
+    end
+  end
+
   class Callable < Struct.new(:env, :params, :rest, :body)
     def initialize(env, expr)
       super(env.clone, *formal_params(expr.head), expr.tail)

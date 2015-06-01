@@ -18,6 +18,11 @@ RSpec.describe Parser do
       .to eq(int(1))
   end
 
+  it "parses strings" do
+    expect(parser(tok(:STR, "foo")).parse)
+      .to eq(str("foo"))
+  end
+
   it "parses s-expressions" do
     expect(parser(tok(:BRA), tok(:SYM, :foo), tok(:SYM, :bar), tok(:KET)).parse)
       .to eq(sexp(sym(:foo), sym(:bar)))

@@ -14,6 +14,8 @@ class Parser
       Value::Int.new(tok.val)
     when :SYM
       Value::Sym.new(tok.val)
+    when :STR
+      Value::Str.new(tok.val)
     when :QUOT
       enquote parse
     when :BRA

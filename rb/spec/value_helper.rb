@@ -9,6 +9,10 @@ module ValueHelper
     Value::Sym.new(name)
   end
 
+  def str(val)
+    Value::Str.new(val)
+  end
+
   def sexp(*vals)
     Value.to_sexp(vals)
   end

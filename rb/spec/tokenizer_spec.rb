@@ -27,6 +27,11 @@ RSpec.describe Tokenizer do
   tok_test("my-var-name", tok(:SYM, :"my-var-name"), "kebab case")
   tok_test("var-1",       tok(:SYM, :"var-1"),       "symbol with number")
 
+  tok_test("\"\"",          tok(:STR, ""),         "empty string")
+  tok_test("\"foo\"",       tok(:STR, "foo"),      "string")
+  tok_test("\"foo\\nbar\"", tok(:STR, "foo\nbar"), "string w/escaped character")
+  tok_test("\"\\u000a\"",   tok(:STR, "\u000a"),   "string w/escaped code")
+
   describe "symbol" do
     it "is terminated by whitespace and comments" do
       expect(tokenize("hello wor;; comment\nld"))

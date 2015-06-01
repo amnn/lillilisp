@@ -7,6 +7,16 @@ RSpec.describe Evaluator do
   let(:env)  { Environment.new }
   let(:e)    { Evaluator.new }
 
+  describe "constants" do
+    it "evaluates numbers" do
+      expect(e.eval(env, int(1))).to eq(int(1))
+    end
+
+    it "evaluates strings" do
+      expect(e.eval(env, str("foo"))).to eq(str("foo"))
+    end
+  end
+
   describe "if" do
     let(:t_pt) { int(1) }
     let(:e_pt) { int(2) }
