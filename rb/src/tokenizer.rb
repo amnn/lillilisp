@@ -19,38 +19,60 @@ class Tokenizer
     until @input.empty?
       case @input
       when /\A(\s|,)/
-        @input.slice!(/\A[\s,]+/)
+        eat_ws
       when /\A;/
-        @input.slice!(/\A.*$/)
+        eat_line
       when /\A\(/
-        @input.slice!(0)
-        yield Token[:BRA]
+        eat; yield Token[:BRA]
       when /\A\)/
-        @input.slice!(0)
-        yield Token[:KET]
+        eat; yield Token[:KET]
       when /\A\'/
-        @input.slice!(0)
-        yield Token[:QUOT]
+        eat; yield Token[:QUOT]
       when /\A\&/
-        @input.slice!(0)
-        yield Token[:SYM, :&]
+        eat; yield Token[:SYM, :&]
       when /\A\"/
-        str = @input
-          .slice!(/\A(?:\".*[^\\]\")|\"\"/)[1...-1]
-          .gsub(/\\u[a-f\d]{4}/) { |m| unescape(m[1..-1]) }
-          .gsub(/\\./) { |m| unescape(m[1..-1]) }
-        yield Token[:STR, str]
+        yield Token[:STR, slice_str]
       when /\A[+-]?[0-9]/
-        num = @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i
-        yield Token[:NUM, num]
+        yield Token[:NUM, slice_num]
       else
-        sym = @input.slice!(/\A.[^\s,;()'&]*/i).to_sym
-        yield Token[:SYM, sym]
+        yield Token[:SYM, slice_sym]
       end
     end
   end
 
   private
+  SYMBOL_TERMINATORS = %w{\s , ; ( ) ' & "}
+
+  def eat
+    @input.slice!(0)
+  end
+
+  def eat_ws
+    @input.slice!(/\A[\s,]+/)
+  end
+
+  def eat_line
+    @input.slice!(/\A.*$/)
+  end
+
+  def slice_str
+    desanitize @input.slice!(/\A(?:\".*[^\\]\")|\"\"/)[1...-1]
+  end
+
+  def slice_num
+    @input.slice!(/\A[+-]?[0-9][0-9_]*/).to_i
+  end
+
+  def slice_sym
+    @input.slice!(/\A.[^#{SYMBOL_TERMINATORS.join}]*/i).to_sym
+  end
+
+  def desanitize(input)
+    input
+      .gsub(/\\u[a-f\d]{4}/) { |m| unescape(m[1..-1]) }
+      .gsub(/\\./) { |m| unescape(m[1..-1]) }
+  end
+
   UNESCAPE_CODES = {
     '0'  => "\u0000",
     'a'  => "\u0007",

@@ -45,14 +45,19 @@ RSpec.describe Tokenizer do
                 tok(:SYM, :baz)])
     end
 
-    it "is termianted by the quote" do
+    it "is terminated by the quote" do
       expect(tokenize("foo'bar"))
         .to eq([tok(:SYM, :foo), tok(:QUOT), tok(:SYM, :bar)])
-
     end
-    it "is termianted by the rest parameter" do
+
+    it "is terminated by the rest parameter" do
       expect(tokenize("foo&bar"))
         .to eq([tok(:SYM, :foo), tok(:SYM, :&), tok(:SYM, :bar)])
+    end
+
+    it "is terminated by the double quote" do
+      expect(tokenize("foo\"bar\"baz"))
+        .to eq([tok(:SYM, :foo), tok(:STR, "bar"), tok(:SYM, :baz)])
     end
   end
 
