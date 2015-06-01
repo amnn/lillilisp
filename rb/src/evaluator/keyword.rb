@@ -28,6 +28,5 @@ class Evaluator
     require 'evaluator/keyword/def'
     require 'evaluator/keyword/if'
     require 'evaluator/keyword/quote'
-
   end
 end

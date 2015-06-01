@@ -4,6 +4,7 @@ module Value
       super(env.clone, *formal_params(expr.head), expr.tail)
     end
 
+    protected
     def apply(e, args)
       env.elaborate(actual_params(args)) do
         body.reduce(nil) do |_, expr|
@@ -12,7 +13,6 @@ module Value
       end
     end
 
-    protected
     def params_to_s
       params.join(' ') + (rest ? " & #{rest}" : "")
     end

@@ -38,10 +38,8 @@ class Evaluator
 
   def eval_callable(callable, env, body)
     case callable
-    when Value::Fn
-      callable.apply(self, body.map { |e| eval(env, e) })
-    when Value::Macro
-      eval(env, callable.apply(self, body.to_a))
+    when Value::Callable
+      callable.eval(self, env, body)
     else
       raise EvalError, "#{callable} not callable!"
     end
