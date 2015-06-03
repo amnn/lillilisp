@@ -9,12 +9,12 @@ class Evaluator
       end
 
       def self.eval(e, env, body)
-      c_expr, t_expr, e_expr = body.to_a
-      if Value::Nil == e.eval(env, c_expr)
-        e.eval(env, e_expr)
-      else
-        e.eval(env, t_expr)
-      end
+        c_expr, t_expr, e_expr = body.to_a
+        if Value::Nil == e.eval(env, c_expr)
+          e.eval(env, e_expr)
+        else
+          e.eval(env, t_expr)
+        end
       end
     end
   end
