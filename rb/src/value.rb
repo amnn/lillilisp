@@ -5,6 +5,7 @@ require 'value/list'
 
 require 'value/callable'
 require 'value/fn'
+require 'value/primitive'
 require 'value/macro'
 
 module Value
@@ -23,8 +24,16 @@ module Value
       Value::Str.new(val)
     end
 
+    def cons(h, t)
+      Value::Cons.new(h, t)
+    end
+
     def sexp(*vals)
       Value.to_sexp(vals)
+    end
+
+    def prim(param_ts, rest_t = nil, &blk)
+      Value::Primitive.new(param_ts, rest_t, &blk)
     end
   end
 end

@@ -4,6 +4,7 @@ require 'evaluator'
 require 'parser'
 require 'tokenizer'
 require 'environment'
+require 'primitives'
 require 'error'
 
 class REPL
@@ -14,6 +15,9 @@ class REPL
         until p.done?
           puts "--> #{eval(p.parse)}"
         end
+      rescue Evaluator::ExitError
+        puts "Bye!"
+        break
       rescue LangError => e
         puts e
       rescue Interrupt
@@ -24,7 +28,7 @@ class REPL
 
   private
   def env
-    @env ||= Environment.new
+    @env ||= Primitives.load Environment.new
   end
 
   def read(input)
