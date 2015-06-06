@@ -25,7 +25,7 @@ module Value
     end
 
     def to_s
-      if ListHelpers::nil_terminated?(self)
+      if Value.nil_terminated?(self)
         "'(#{enum_for(:each).to_a.join(' ')})"
       else
         "'(#{head} . #{tail})"

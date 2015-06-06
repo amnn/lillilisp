@@ -14,10 +14,9 @@ module Value
     end
 
     def params_to_s
-      params.join(' ') + (rest ? " & #{rest}" : "")
+      (params.join(' ') + (rest ? " & #{rest}" : "")).lstrip
     end
 
-    private
     def formal_params(args)
       arg_names  = args.map(&:name)
       params     = arg_names.take_while { |n| n != :& }
