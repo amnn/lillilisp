@@ -61,6 +61,17 @@ RSpec.describe Tokenizer do
     end
   end
 
+  describe "strings" do
+    it "contains escaped quotes" do
+      expect(tokenize("\"foo\\\"bar\""))
+        .to eq([tok(:STR, "foo\"bar")])
+    end
+
+    it "does not contain unescaped quotes" do
+      expect(tokenize("\"foo\" \"bar\""))
+        .to eq([tok(:STR, "foo"), tok(:STR, "bar")])
+    end
+  end
   describe "sequences" do
     let(:toks) { sym_list(:foo, :bar) }
 

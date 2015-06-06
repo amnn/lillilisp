@@ -56,7 +56,7 @@ class Tokenizer
   end
 
   def slice_str
-    desanitize @input.slice!(/\A(?:\".*[^\\]\")|\"\"/)[1...-1]
+    desanitize @input.slice!(/\A\"((\\\")|[^\"])*\"/)[1...-1]
   end
 
   def slice_num
@@ -82,9 +82,9 @@ class Tokenizer
     'v'  => "\u000b",
     'f'  => "\u000c",
     'r'  => "\u000d",
-    '"'  => "\u0027",
-    '\\' => "\u002f",
-    "'"  => "\u005c",
+    '"'  => "\u0022",
+    "'"  => "\u0027",
+    '\\' => "\u005c",
   }
 
   def unescape(code)
