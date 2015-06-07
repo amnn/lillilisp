@@ -17,6 +17,7 @@ RSpec.describe Primitives do
   let(:a_nil)  { sexp }
   let(:a_list) { sexp(int(1), int(2)) }
   let(:a_cell) { cons(int(1), int(2)) }
+  let(:some_values) { [an_int, a_sym, a_str, a_nil, a_list, a_cell] }
 
   shared_examples_for "it has arity at least" do |vals, lb|
     it "complains when not given at least #{lb} arguments" do
@@ -40,20 +41,12 @@ RSpec.describe Primitives do
   context "Arithmetic Ops" do
     shared_examples_for "a numerical op" do |arity = 1|
       it "complains when given non-integer values" do
-        expect { subject.apply(env, [a_str]*arity) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_sym]*arity) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_nil]*arity) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_list]*arity) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_cell]*arity) }
-          .to raise_error(Evaluator::TypeError)
+        some_values
+          .select { |v| v != an_int }
+          .each do |v|
+          expect { subject.apply(env, [v]*arity) }
+            .to raise_error(Evaluator::TypeError)
+        end
       end
     end
 
@@ -159,17 +152,12 @@ RSpec.describe Primitives do
 
     shared_examples_for "a list op" do
       it "complains if not given a cons cell" do
-        expect { subject.apply(env, [a_nil]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [an_int]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_str]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_sym]) }
-          .to raise_error(Evaluator::TypeError)
+        some_values
+          .select { |v| ![a_cell, a_list].include?(v) }
+          .each do |v|
+          expect { subject.apply(env, [v]) }
+            .to raise_error(Evaluator::TypeError)
+        end
       end
 
       it_behaves_like "it has exact arity", ->() { [cons(int(1), int(2)),
@@ -198,24 +186,16 @@ RSpec.describe Primitives do
   end
 
   context "Str Ops" do
+    let(:not_strings) { some_values.select { |v| v != a_str } }
+
     describe "print" do
       subject { env.lookup :print }
 
       it "complains if not given strings" do
-        expect { subject.apply(env, [a_sym]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [an_int]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_cell]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_nil]) }
-          .to raise_error(Evaluator::TypeError)
-
-        expect { subject.apply(env, [a_list]) }
-          .to raise_error(Evaluator::TypeError)
+        not_strings.each do |v|
+          expect { subject.apply(env, [v]) }
+            .to raise_error(Evaluator::TypeError)
+        end
       end
 
       it "returns a nil value" do
@@ -242,11 +222,9 @@ RSpec.describe Primitives do
       end
 
       it "converts other objects to strings" do
-        expect(subject.apply(env, [a_sym])).to eq(str(a_sym.to_s))
-        expect(subject.apply(env, [an_int])).to eq(str(an_int.to_s))
-        expect(subject.apply(env, [a_cell])).to eq(str(a_cell.to_s))
-        expect(subject.apply(env, [a_nil])).to eq(str(a_nil.to_s))
-        expect(subject.apply(env, [a_list])).to eq(str(a_list.to_s))
+        not_strings.each do |v|
+          expect(subject.apply(env, [v])).to eq(str(v.to_s))
+        end
       end
 
       it "joins operands together (without spaces)" do
@@ -279,12 +257,9 @@ RSpec.describe Primitives do
       subject { env.lookup :"=" }
 
       it "returns a truthy value for equal objects" do
-        expect(subject.apply(env, [an_int, an_int])).not_to eq(a_nil)
-        expect(subject.apply(env, [a_sym, a_sym])).not_to eq(a_nil)
-        expect(subject.apply(env, [a_str, a_str])).not_to eq(a_nil)
-        expect(subject.apply(env, [a_nil, a_nil])).not_to eq(a_nil)
-        expect(subject.apply(env, [a_cell, a_cell])).not_to eq(a_nil)
-        expect(subject.apply(env, [a_list, a_list])).not_to eq(a_nil)
+        some_values.each do |v|
+          expect(subject.apply(env, [v, v])).not_to eq(a_nil)
+        end
       end
 
       it "returns a falsey value for unequal objects" do
