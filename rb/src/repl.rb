@@ -9,6 +9,7 @@ require 'error'
 
 class REPL
   def run
+    print_usage
     loop do
       begin
         print ">>> "; p = read(gets || "")
@@ -41,6 +42,12 @@ class REPL
 
   def evaluator
     @evaluator ||= Evaluator.new
+  end
+
+  def print_usage
+    puts "lillilisp REPL"
+    puts "Type (exit) to quit"
+    puts
   end
 end
 
