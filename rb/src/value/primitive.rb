@@ -5,7 +5,7 @@ module Value
     def initialize(param_ts, rest_t, &blk)
       @param_ts = param_ts.map { |t| wrap_type t }
       @rest_t   = wrap_type rest_t
-      @blk   = blk
+      @blk      = blk
 
       p, r = parse_params blk.parameters
       self.params = p

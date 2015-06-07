@@ -71,6 +71,11 @@ module Primitives
 
     ordered = [Value::Str, Value::Int]
     env.define :'<', prim([ordered, ordered]) { |x, y|
+      unless x.kind_of?(y.class) || y.kind_of?(x.class)
+        raise Evaluator::TypeError, "Comparing instances of disparate types: "\
+                                    "#{x.class}, #{y.class}"
+      end
+
       x.val < y.val ? sym(:t) : sexp
     }
   end
