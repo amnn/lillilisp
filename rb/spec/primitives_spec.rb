@@ -39,77 +39,54 @@ RSpec.describe Primitives do
   end
 
   context "Arithmetic Ops" do
-    shared_examples_for "a numerical op" do |arity = 1|
+    shared_examples_for "a numerical op" do
       it "complains when given non-integer values" do
         some_values
           .select { |v| v != an_int }
           .each do |v|
-          expect { subject.apply(env, [v]*arity) }
+          expect { subject.apply(env, [v]*2) }
             .to raise_error(Evaluator::TypeError)
         end
       end
+
+      it_behaves_like "it has exact arity", ->() { [an_int]*3 }, 2
     end
 
-    describe "+" do
-      subject { env.lookup :+ }
+    describe "$add" do
+      subject { env.lookup :'$add' }
 
-      it "returns 0 when called with no arguments" do
-        expect(subject.apply(env, [])).to eq(int(0))
-      end
-
-      it "is the identity for one argument" do
-        expect(subject.apply(env, [int(1)])).to eq(int(1))
-      end
-
-      it "adds more than two arguments together" do
+      it "adds numbers" do
         expect(subject.apply(env, [int(1), int(2)])).to eq(int(3))
-        expect(subject.apply(env, [int(1), int(2), int(3)])).to eq(int(6))
       end
 
       it_behaves_like "a numerical op"
     end
 
-    describe "-" do
-      subject { env.lookup :- }
+    describe "$sub" do
+      subject { env.lookup :'$sub' }
 
-      it "negates its argument if there is only one" do
-        expect(subject.apply(env, [int(1)])).to eq(int(-1))
-      end
-
-      it "subtracts the arguments from left to right if more than one given" do
+      it "subtracts numbers" do
         expect(subject.apply(env, [int(2), int(1)])).to eq(int(1))
-        expect(subject.apply(env, [int(3), int(2), int(1)])).to eq(int(0))
-      end
-
-      it_behaves_like "a numerical op"
-      it_behaves_like "it has arity at least", ->() { [an_int] }, 1
-    end
-
-    describe "*" do
-      subject { env.lookup :* }
-
-      it "returns 1 when called with no arguments" do
-        expect(subject.apply(env, [])).to eq(int(1))
-      end
-
-      it "is the identity for one argument" do
-        expect(subject.apply(env, [int(1)])).to eq(int(1))
-      end
-
-      it "multiplies more than one argument together" do
-        expect(subject.apply(env, [int(1), int(2)])).to eq(int(2))
-        expect(subject.apply(env, [int(1), int(2), int(4)])).to eq(int(8))
       end
 
       it_behaves_like "a numerical op"
     end
 
-    describe "/" do
-      subject { env.lookup :/ }
+    describe "$mul" do
+      subject { env.lookup :'$mul' }
 
-      it "divides more than two numbers from left to right" do
+      it "multiplies numbers" do
+        expect(subject.apply(env, [int(3), int(2)])).to eq(int(6))
+      end
+
+      it_behaves_like "a numerical op"
+    end
+
+    describe "$div" do
+      subject { env.lookup :'$div' }
+
+      it "divides numbers" do
         expect(subject.apply(env, [int(4), int(2)])).to eq(int(2))
-        expect(subject.apply(env, [int(8), int(4), int(2)])).to eq(int(1))
       end
 
       it "rounds down" do
@@ -117,27 +94,17 @@ RSpec.describe Primitives do
       end
 
       it_behaves_like "a numerical op", 2
-      it_behaves_like "it has arity at least", ->() { [an_int, an_int] }, 2
     end
 
-    describe "%" do
-      subject { env.lookup :% }
+    describe "$mod" do
+      subject { env.lookup :'$mod' }
 
-      it "complains when not given exactly 2 arguments" do
-        expect { subject.apply(env, [int(1)]) }
-          .to raise_error(Evaluator::EvalError)
-
-        expect { subject.apply(env, [int(1), int(2), int(3)]) }
-          .to raise_error(Evaluator::EvalError)
-      end
-
-      it "(% x y) evaluates to x mod y" do
+      it "calculates modulo numbers" do
         expect(subject.apply(env, [int(3), int(2)])).to eq(int(1))
         expect(subject.apply(env, [int(-1), int(2)])).to eq(int(1))
       end
 
       it_behaves_like "a numerical op", 2
-      it_behaves_like "it has exact arity", ->() { [an_int, an_int, an_int] }, 2
     end
   end
 
@@ -146,7 +113,8 @@ RSpec.describe Primitives do
       subject { env.lookup :cons }
 
       it "produces a cons cell" do
-        expect(subject.apply(env, [int(1), int(2)])).to eq(cons(int(1), int(2)))
+        expect(subject.apply(env, [int(1), int(2)]))
+          .to eq(cons(int(1), int(2)))
       end
     end
 
@@ -199,7 +167,7 @@ RSpec.describe Primitives do
       end
 
       it "returns a nil value" do
-        expect(subject.apply(env, []))
+        expect(subject.apply(env, [a_str]))
           .to eq(sexp)
       end
 
@@ -208,10 +176,7 @@ RSpec.describe Primitives do
         subject.apply(env, [str("foo")])
       end
 
-      it "separates multiple arguments with spaces" do
-        expect(STDOUT).to receive(:puts).with("foo bar")
-        subject.apply(env, [str("foo"), str("bar")])
-      end
+      it_behaves_like "it has exact arity", ->() { [a_str]*2 }, 1
     end
 
     describe "str" do

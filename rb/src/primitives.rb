@@ -15,47 +15,26 @@ module Primitives
     env
   end
 
+  def self.int_prim(&op)
+    prim([Value::Int, Value::Int]) { |x, y| int(op[x.val, y.val]) }
+  end
+
   def self.arith_ops(env)
-    env.define :+, prim([], Value::Int) { |*xs|
-      int(xs.reduce(0) { |acc, x| acc + x.val })
-    }
-
-    env.define :-, prim([], Value::Int) { |x, *xs|
-      int(
-        if xs.empty?
-          -x.val
-        else
-          xs.reduce(x.val) { |acc, y| acc - y.val }
-        end)
-    }
-
-    env.define :*, prim([], Value::Int) { |*xs|
-      int(xs.reduce(1) { |acc, x| acc * x.val })
-    }
-
-    env.define :/, prim([], Value::Int) { |x,y,*xs|
-      int(xs.reduce(x.val/y.val) { |acc, z| acc / z.val })
-    }
-
-    env.define :%, prim([Value::Int, Value::Int]) { |x, y|
-      int(x.val % y.val)
-    }
+    env.define :'$add', int_prim(&:+)
+    env.define :'$sub', int_prim(&:-)
+    env.define :'$mul', int_prim(&:*)
+    env.define :'$div', int_prim(&:/)
+    env.define :'$mod', int_prim(&:%)
   end
 
   def self.list_ops(env)
-    env.define :cons, prim([Object, Object]) { |x, xs|
-      cons(x, xs)
-    }
-
-    env.define :head, prim([Value::Cons]) { |l| l.head }
-    env.define :tail, prim([Value::Cons]) { |l| l.tail }
+    env.define :cons, prim([Object, Object]) { |x, xs| cons(x, xs) }
+    env.define :head, prim([Value::Cons])    { |l| l.head }
+    env.define :tail, prim([Value::Cons])    { |l| l.tail }
   end
 
   def self.str_ops(env)
-    env.define :print, prim([], Value::Str) { |*xs|
-      puts xs.map { |x| x.val }.join(' ')
-      sexp
-    }
+    env.define :print, prim([Value::Str]) { |s| puts s.val; sexp }
 
     env.define :str, prim([]) { |*xs|
       str(xs.map { |x| x.is_a?(Value::Str) ? x.val : x.to_s }.join)
