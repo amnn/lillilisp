@@ -28,6 +28,14 @@ class Evaluator
       arg_list? expr.head
     end
 
+    def assignment?(expr, part)
+      exact_len? 2, part, expr
+      name = expr.head
+      unless name.is_a? Value::Sym
+        raise Evaluator::SyntaxError, "`#{part}` expects a symbol, received `#{name}`"
+      end
+    end
+
     def len?(keyword, expr, test, err) #+yields
       actual = expr.to_a.count
       unless test.(actual)

@@ -34,6 +34,7 @@ class Evaluator
     require 'evaluator/keyword/if'
     require 'evaluator/keyword/quote'
     require 'evaluator/keyword/require'
+    require 'evaluator/keyword/set_bang'
 
     protected
     attr_reader :evaluator

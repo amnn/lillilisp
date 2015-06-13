@@ -29,6 +29,15 @@ class Environment
     raise SymbolError, "Undefined symbol `#{sym}`"
   end
 
+  def update(sym, val)
+    @root.each do |map|
+      if map.has_key? sym
+        return (map[sym] = val)
+      end
+    end
+    raise SymbolError, "Undefined symbol `#{sym}`"
+  end
+
   def push
     @root = Scope[{}, @root]
   end

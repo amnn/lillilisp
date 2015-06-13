@@ -76,6 +76,32 @@ RSpec.describe Environment do
     end
   end
 
+  describe "#update" do
+    it "throws an error if the symbol does not exist" do
+      expect { subject.update(:foo, 1) }
+        .to raise_error(Environment::SymbolError)
+    end
+
+    it "searches through all scopes" do
+      subject.define(:foo, 1)
+      subject.push
+      subject.push
+      subject.update(:foo, 2)
+      expect(subject.lookup(:foo)).to eq(2)
+    end
+
+    it "updates only the closest binding" do
+      subject.define(:foo, 1)
+      subject.push
+      subject.define(:foo, 2)
+      subject.update(:foo, 3)
+
+      expect(subject.lookup(:foo)).to eq(3)
+      subject.pop
+      expect(subject.lookup(:foo)).to eq(1)
+    end
+  end
+
   describe "#push" do
     it "preserves values in lower scopes" do
       subject.define(:foo, 1)
