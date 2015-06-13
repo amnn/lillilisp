@@ -1,9 +1,9 @@
-require 'evaluator/validate'
+require 'evaluator/keyword_handler'
 require 'value'
 
 class Evaluator
   class Keyword
-    Def = Keyword.kw(:def) do
+    Def = KeywordHandler.kw(:def) do
       def validate(body)
         exact_len? 2, "def", body
         name = body.head

@@ -1,9 +1,9 @@
-require 'evaluator/validate'
+require 'evaluator/keyword_handler'
 require 'value'
 
 class Evaluator
   class Keyword
-    Macro = Keyword.kw(:macro) do
+    Macro = KeywordHandler.kw(:macro) do
       def validate(body)
         abstraction? body, "macro"
       end

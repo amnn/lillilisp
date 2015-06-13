@@ -1,9 +1,9 @@
-require 'evaluator/validate'
+require 'evaluator/keyword_handler'
 require 'value'
 
 class Evaluator
   class Keyword
-    If = Keyword.kw(:if) do
+    If = KeywordHandler.kw(:if) do
       def validate(body)
         exact_len? 3, "if", body
       end

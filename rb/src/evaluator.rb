@@ -1,6 +1,6 @@
 require 'value'
 require 'error'
-require 'evaluator/keyword'
+require 'evaluator/keyword_handler'
 
 class Evaluator
   EvalError   = LangError.of_type "Runtime"
@@ -27,7 +27,7 @@ class Evaluator
 
   private
   def kw
-    @kw ||= Keyword.new(self)
+    @kw ||= KeywordHandler.new(self)
   end
 
   def eval_sexp(env, expr)

@@ -1,9 +1,9 @@
-require 'evaluator/validate'
+require 'evaluator/keyword_handler'
 require 'value'
 
 class Evaluator
   class Keyword
-    Fn = Keyword.kw(:fn) do
+    Fn = KeywordHandler.kw(:fn) do
       def validate(body)
         abstraction? body, "fn"
       end
