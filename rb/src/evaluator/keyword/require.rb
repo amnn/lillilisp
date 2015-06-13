@@ -17,7 +17,7 @@ class Evaluator
         exact_len? 1, "require", body
         arg = body.head
         unless arg.is_a? Value::Str
-          raise TypeError, "`require` expects a string, received `#{fname}`."
+          raise TypeError, "`require` expects a string, received `#{arg}`."
         end
       end
 
@@ -32,7 +32,7 @@ class Evaluator
 
         p = read slurp(fn)
         until p.done?
-          puts "~~> #{eval(env, p.parse)}"
+          puts "~~> #{eval_expr(env, p.parse)}"
         end
 
         files << fn
@@ -55,7 +55,7 @@ class Evaluator
         Parser.new(Tokenizer.stream input)
       end
 
-      def eval(env, expr)
+      def eval_expr(env, expr)
         evaluator.eval(env, expr)
       end
 
