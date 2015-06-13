@@ -7,6 +7,7 @@ RSpec.describe Evaluator::Keyword::If do
 
   let(:env)  { Environment.new }
   let(:e)    { Evaluator.new }
+  subject    { described_class.new(e) }
 
   let(:t_pt) { int(1) }
   let(:e_pt) { int(2) }
@@ -16,7 +17,7 @@ RSpec.describe Evaluator::Keyword::If do
     context "when there are fewer than 3 sub-expressions" do
       let(:expr) { sexp(int(1)) }
       it "throws an error" do
-        expect { described_class.validate(expr) }
+        expect { subject.validate(expr) }
           .to raise_error(Evaluator::SyntaxError)
       end
     end
@@ -24,7 +25,7 @@ RSpec.describe Evaluator::Keyword::If do
     context "when there are more than 3 sub-expressions" do
       let(:expr) { sexp(int(1), t_pt, e_pt, t_pt) }
       it "throws an error" do
-        expect { described_class.validate(expr) }
+        expect { subject.validate(expr) }
           .to raise_error(Evaluator::SyntaxError)
       end
     end
@@ -34,14 +35,14 @@ RSpec.describe Evaluator::Keyword::If do
     context "when condition evaluates to nil" do
       let(:cond) { sexp(sym(:quote), sexp()) }
       it "evaluates the third sub-expression" do
-        expect(described_class.eval(e, env, expr)).to eq(e_pt)
+        expect(subject.eval(env, expr)).to eq(e_pt)
       end
     end
 
     context "when condition evaluates to non-nil" do
       let(:cond) { int(1) }
       it "evaluate the second sub-expression" do
-        expect(described_class.eval(e, env, expr)).to eq(t_pt)
+        expect(subject.eval(env, expr)).to eq(t_pt)
       end
     end
   end

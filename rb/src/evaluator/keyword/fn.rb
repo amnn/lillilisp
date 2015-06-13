@@ -4,11 +4,11 @@ require 'value'
 class Evaluator
   class Keyword
     Fn = Keyword.kw(:fn) do
-      def self.validate(body)
+      def validate(body)
         abstraction? body, "fn"
       end
 
-      def self.eval(e, env, body)
+      def eval(env, body)
         Value::Fn.new(env, body)
       end
     end

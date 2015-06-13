@@ -26,12 +26,16 @@ class Evaluator
   end
 
   private
+  def kw
+    @kw ||= Keyword.new(self)
+  end
+
   def eval_sexp(env, expr)
     oper = expr.head
     body = expr.tail
 
-    if Keyword.handles?(oper)
-      Keyword.eval(self, oper, env, body)
+    if kw.handles?(oper)
+      kw.eval(oper, env, body)
     else
       eval_callable(eval(env, oper),
                     env, body)

@@ -7,6 +7,7 @@ RSpec.describe Evaluator::Keyword::Def do
 
   let(:env)  { Environment.new }
   let(:e)    { Evaluator.new }
+  subject    { described_class.new(e) }
 
   let(:var)   { sym(:x) }
   let(:val_1) { int(1) }; let(:def_1) { sexp(var, val_1) }
@@ -16,7 +17,7 @@ RSpec.describe Evaluator::Keyword::Def do
     context "when there are fewer than 2 parameters" do
       let(:e_def) { sexp(var) }
       it "throws an error" do
-        expect { described_class.validate(e_def) }
+        expect { subject.validate(e_def) }
           .to raise_error(Evaluator::SyntaxError)
       end
     end
@@ -24,7 +25,7 @@ RSpec.describe Evaluator::Keyword::Def do
     context "when there are more than 2 parameters" do
       let(:e_def) { sexp(var, val_1, val_1) }
       it "throws an error" do
-        expect { described_class.validate(e_def) }
+        expect { subject.validate(e_def) }
           .to raise_error(Evaluator::SyntaxError)
       end
     end
@@ -32,13 +33,13 @@ RSpec.describe Evaluator::Keyword::Def do
 
   describe ".eval" do
     it "modifies the environment" do
-      described_class.eval(e, env, def_1)
+      subject.eval(env, def_1)
       expect(env.lookup(var.name)).to eq(val_1)
     end
 
     it "overwrites existing definitions" do
-      described_class.eval(e, env, def_1)
-      described_class.eval(e, env, def_2)
+      subject.eval(env, def_1)
+      subject.eval(env, def_2)
       expect(env.lookup(var.name)).to eq(val_2)
     end
   end
