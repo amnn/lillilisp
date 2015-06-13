@@ -23,26 +23,20 @@ class Evaluator
 
       def eval(env, body)
         fn = fname(body.head)
-        if !loaded?(fn) && load_file(fn, env)
-          sym(:t)
-        else
-          sexp
-        end
+        load_file(fn, env) ? sym(:t) : sexp
       end
 
       private
       def load_file(fn, env)
-        File.open(fn) do |f|
-          p = read(f)
-          until p.done?
-            puts "~~> #{eval(env, p.parse)}"
-          end
+        return false if loaded? fn
+
+        p = read slurp(fn)
+        until p.done?
+          puts "~~> #{eval(env, p.parse)}"
         end
 
         files << fn
         true
-      rescue Errno::ENOENT
-        raise FileError, "No such file, `#{fn}`"
       rescue LangError => e
         puts e; false
       end
@@ -51,8 +45,14 @@ class Evaluator
         files.include? fn
       end
 
-      def read(f)
-        Parser.new(Tokenizer.stream f.read)
+      def slurp(fn)
+        File.open(fn) { |f| f.read }
+      rescue Errno::ENOENT
+        raise FileError, "No such file, `#{fn}`"
+      end
+
+      def read(input)
+        Parser.new(Tokenizer.stream input)
       end
 
       def eval(env, expr)
