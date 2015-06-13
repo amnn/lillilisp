@@ -215,6 +215,30 @@ RSpec.describe Primitives do
 
       it_behaves_like "it has exact arity", ->() { [a_str, an_int, an_int] }, 2
     end
+
+    describe "sym" do
+      subject { env.lookup :"sym" }
+      let(:not_symable) { some_values.select { |v| ![a_sym, a_str].include?(v) } }
+
+      it "complains when not given a string or a symbol" do
+        not_symable.each do |v|
+          expect { subject.apply(env, [v]) }
+            .to raise_error(Evaluator::TypeError)
+        end
+      end
+
+      it "is the identity on symbols" do
+        expect(subject.apply(env, [a_sym]))
+          .to eq(a_sym)
+      end
+
+      it "converts strings to symbols of the same name" do
+        expect(subject.apply(env, [a_str]))
+          .to eq(sym(a_str.val.to_sym))
+      end
+
+      it_behaves_like "it has exact arity", ->() { [a_str]*2 }, 1
+    end
   end
 
   context "Comp Ops" do

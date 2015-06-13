@@ -9,8 +9,6 @@ require 'parser'
 class Evaluator
   class Keyword
     Require = KeywordHandler.kw(:require) do
-      include Value::Helpers
-
       FileError = LangError.of_type "File"
 
       def validate(body)
@@ -23,7 +21,7 @@ class Evaluator
 
       def eval(env, body)
         fn = fname(body.head)
-        load_file(fn, env) ? sym(:t) : sexp
+        load_file(fn, env) ? Value::Sym[:t] : Value::Nil
       end
 
       private

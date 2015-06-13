@@ -41,7 +41,11 @@ module Primitives
     }
 
     env.define :'char-at', prim([Value::Str, Value::Int]) { |s, i|
-        str(s.val[i.val])
+      str(s.val[i.val])
+    }
+
+    env.define :'sym', prim([[Value::Str, Value::Sym]]) { |s|
+      s.is_a?(Value::Sym) ? s : sym(s.val.to_sym)
     }
   end
 
