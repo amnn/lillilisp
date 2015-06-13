@@ -242,8 +242,8 @@ RSpec.describe Primitives do
   end
 
   context "Comp Ops" do
-    describe "=" do
-      subject { env.lookup :"=" }
+    describe "$eq" do
+      subject { env.lookup :"$eq" }
 
       it "returns a truthy value for equal objects" do
         some_values.each do |v|
@@ -258,8 +258,8 @@ RSpec.describe Primitives do
       it_behaves_like "it has exact arity", ->() { [an_int]*3 }, 2
     end
 
-    describe "<" do
-      subject { env.lookup :"<" }
+    describe "$lt" do
+      subject { env.lookup :"$lt" }
 
       it "only works on strings or ints" do
         expect { subject.apply(env, [sym(:foo), sym(:bar)]) }
