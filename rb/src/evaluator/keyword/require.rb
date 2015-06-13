@@ -33,9 +33,9 @@ class Evaluator
       private
       def load_file(fn, env)
         File.open(fn) do |f|
-          p = Parser.new(Tokenizer.stream f.read)
+          p = read(f)
           until p.done?
-            puts "~~> #{evaluator.eval(env, p.parse)}"
+            puts "~~> #{eval(env, p.parse)}"
           end
         end
 
@@ -49,6 +49,14 @@ class Evaluator
 
       def loaded?(fn)
         files.include? fn
+      end
+
+      def read(f)
+        Parser.new(Tokenizer.stream f.read)
+      end
+
+      def eval(env, expr)
+        evaluator.eval(env, expr)
       end
 
       def files
