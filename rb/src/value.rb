@@ -3,11 +3,6 @@ require 'value/sym'
 require 'value/str'
 require 'value/list'
 
-require 'value/callable'
-require 'value/fn'
-require 'value/primitive'
-require 'value/macro'
-
 module Value
   extend ListHelpers
 
@@ -36,4 +31,9 @@ module Value
       Value::Primitive.new(param_ts, rest_t, &blk)
     end
   end
+
+  require 'value/callable'
+  require 'value/fn'
+  require 'value/primitive'
+  require 'value/macro'
 end

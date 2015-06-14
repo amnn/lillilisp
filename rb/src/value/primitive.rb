@@ -1,3 +1,4 @@
+require 'value'
 require 'evaluator'
 
 module Value
@@ -12,13 +13,18 @@ module Value
       self.rest   = r
     end
 
-    def apply(e, args)
-      arity_check args
-      type_check  args
-      @blk[*args]
+    def eval(e, env, args)
+      arg_vs = eval_args(e, env, args)
+      arity_check arg_vs
+      type_check  arg_vs
+      Sandbox[e, env]
+        .instance_exec(*arg_vs, &@blk)
     end
 
     private
+    Sandbox = Struct.new(:evaluator, :env)
+    Sandbox.include(Value::Helpers)
+
     def parse_params(blk_ps)
       p, r = blk_ps.partition { |type, _| :rest != type }
       [p.map { |_, sym| sym }, (r.first || [])[1]]

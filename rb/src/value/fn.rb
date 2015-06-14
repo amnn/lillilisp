@@ -5,7 +5,12 @@ module Value
     end
 
     def eval(e, env, args)
-      apply(e, args.map { |arg| e.eval(env, arg) })
+      apply(e, eval_args(e, env, args))
+    end
+
+    protected
+    def eval_args(e, env, args)
+      args.map { |arg| e.eval(env, arg) }
     end
   end
 end
