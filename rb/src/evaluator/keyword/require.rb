@@ -1,16 +1,12 @@
 require 'set'
 
 require 'evaluator/keyword_handler'
-require 'error'
 require 'value'
-require 'tokenizer'
-require 'parser'
+require 'repl'
 
 class Evaluator
   class Keyword
     Require = KeywordHandler.kw(:require) do
-      FileError = LangError.of_type "File"
-
       def validate(body)
         exact_len? 1, "require", body
         arg = body.head
@@ -20,41 +16,25 @@ class Evaluator
       end
 
       def eval(env, body)
-        fn = fname(body.head)
-        load_file(fn, env) ? Value::Sym[:t] : Value::Nil
+        if load_file(fname(body.head), env)
+          Value::Sym[:t]
+        else
+          Value::Nil
+        end
       end
 
       private
       def load_file(fn, env)
         return false if loaded? fn
 
-        p = read slurp(fn)
-        until p.done?
-          puts "~~> #{eval_expr(env, p.parse)}"
+        REPL.require(fn, env, evaluator)
+          .step.tap do |finished|
+          files << fn if finished
         end
-
-        files << fn
-        true
-      rescue LangError => e
-        puts e; false
       end
 
       def loaded?(fn)
         files.include? fn
-      end
-
-      def slurp(fn)
-        File.open(fn) { |f| f.read }
-      rescue Errno::ENOENT
-        raise FileError, "No such file, `#{fn}`"
-      end
-
-      def read(input)
-        Parser.new(Tokenizer.stream input)
-      end
-
-      def eval_expr(env, expr)
-        evaluator.eval(env, expr)
       end
 
       def files
