@@ -5,7 +5,7 @@ module Value
     end
 
     def eval(e, env, args)
-      e.eval(env, apply(e, args.to_a))
+      e.eval(env, apply(e, env, args.to_a))
     end
   end
 end

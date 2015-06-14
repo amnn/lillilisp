@@ -13,12 +13,11 @@ module Value
       self.rest   = r
     end
 
-    def eval(e, env, args)
-      arg_vs = eval_args(e, env, args)
-      arity_check arg_vs
-      type_check  arg_vs
+    def apply(e, env, args)
+      arity_check args
+      type_check  args
       Sandbox[e, env]
-        .instance_exec(*arg_vs, &@blk)
+        .instance_exec(*args, &@blk)
     end
 
     private

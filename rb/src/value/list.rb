@@ -35,8 +35,8 @@ module Value
 
 
   module ListHelpers
-    def to_sexp(list)
-      list.reverse_each.reduce(Nil) do |rest, val|
+    def to_sexp(list, term = Nil)
+      list.reverse_each.reduce(term) do |rest, val|
         Cons[val, rest]
       end
     end

@@ -7,6 +7,18 @@ module Primitives
   def self.load(env)
     env.define :exit, prim([]) { raise Evaluator::ExitError }
     env.define :eval, prim([]) { |expr| evaluator.eval(env, expr) }
+    env.define :apply, prim([Value::Fn]) { |f, x, *args|
+      *prep, rest = args.unshift(x)
+
+      unless Value.nil_terminated?(rest)
+        raise Evaluator::TypeError,
+              "`apply` expects last parameter to be a "\
+              "list, received `#{rest}`."
+      end
+
+      f.apply(evaluator, env,
+              Value.to_sexp(prep, rest))
+    }
 
     arith_ops(env)
     list_ops(env)
