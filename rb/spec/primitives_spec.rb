@@ -25,6 +25,8 @@ RSpec.describe Primitives do
   let(:a_cell) { cons(int(1), int(2)) }
   let(:some_values) { [an_int, a_sym, a_str, a_nil, a_list, a_cell] }
 
+  let(:id_fn) { sexp(sym(:fn), sexp(sym(:x)), sym(:x)) }
+
   shared_examples_for "it has arity at least" do |vals, lb|
     it "complains when not given at least #{lb} arguments" do
       expect { subject.eval(e, env, instance_exec(&vals).take(lb - 1)) }
@@ -42,6 +44,23 @@ RSpec.describe Primitives do
   shared_examples_for "it has exact arity" do |vals, ex|
     it_behaves_like "it has arity at least", vals, ex
     it_behaves_like "it has arity at most", vals, ex
+  end
+
+  describe "eval" do
+    subject { env.lookup :eval }
+
+    it "evaluates its argument" do
+      [an_int, a_str].each do |v|
+        expect(subject.eval(e, env, [v])).to eq(v)
+      end
+
+      expect(subject.eval(e, env, [quote(sexp(id_fn, an_int))])).to eq(an_int)
+    end
+
+    it "evaluates in the current environment" do
+      env.define(:x, an_int)
+      expect(subject.eval(e, env, [sym(:x)])).to eq(an_int)
+    end
   end
 
   context "Arithmetic Ops" do

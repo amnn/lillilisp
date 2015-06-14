@@ -6,6 +6,7 @@ module Primitives
 
   def self.load(env)
     env.define :exit, prim([]) { raise Evaluator::ExitError }
+    env.define :eval, prim([]) { |expr| evaluator.eval(env, expr) }
 
     arith_ops(env)
     list_ops(env)
