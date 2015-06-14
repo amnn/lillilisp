@@ -62,17 +62,36 @@ module Primitives
     }
   end
 
-  def self.comp_ops(env)
-    env.define :'$eq', prim([]) { |x, y| x == y ? sym(:t) : sexp }
+  def self.equate(x, y)
+    x == y
+  end
 
-    ordered = [Value::Str, Value::Int]
-    env.define :'$lt', prim([ordered, ordered]) { |x, y|
+  def self.compare(x, y)
+    case x
+    when Value::Int, Value::Str
+      x.val < y.val
+    when Value::Sym
+      puts "Compare Sym #{x}, #{y}"
+      x.name < y.name
+    when Value::Cons
+      compare(x.head, y.head) ||
+        (equate(x.head, y.head) &&
+         compare(x.tail, y.tail))
+    end
+  end
+
+  def self.comp_ops(env)
+    env.define :'$eq', prim([]) { |x, y|
+      Primitives.equate(x, y) ? sym(:t) : sexp
+    }
+
+    env.define :'$lt', prim([]) { |x, y|
       unless x.kind_of?(y.class) || y.kind_of?(x.class)
         raise Evaluator::TypeError, "Comparing instances of disparate types: "\
                                     "#{x.class}, #{y.class}"
       end
 
-      x.val < y.val ? sym(:t) : sexp
+      Primitives.compare(x, y) ? sym(:t) : sexp
     }
   end
 end

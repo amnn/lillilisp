@@ -303,11 +303,6 @@ RSpec.describe Primitives do
     describe "$lt" do
       subject { env.lookup :"$lt" }
 
-      it "only works on strings or ints" do
-        expect { subject.apply(e, env, [sym(:foo), sym(:bar)]) }
-          .to raise_error(Evaluator::TypeError)
-      end
-
       it "complains if the two values it is given are of different types" do
         expect { subject.apply(e, env, [str("foo"), int(1)]) }
           .to raise_error(Evaluator::TypeError)
