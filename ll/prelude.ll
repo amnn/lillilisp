@@ -30,6 +30,7 @@
                   rest)))
     (foldr emit-pair 'nil pairs)))
 
+(defmacro comment (& body) 'nil)
 ;;;;;;;;;; Functions ;;;;;;;;;;
 
 (defn flip (f) (fn (y x) (f x y)))

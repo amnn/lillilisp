@@ -16,13 +16,21 @@ module Writer
     end
 
     def err(e)
-      put e
+      putln e
     end
   end
 
-  class Req < Std
+  class Req
+    def initialize(proxy)
+      @proxy = proxy
+    end
+
     def ret(s)
       putln "~~> #{s}"
+    end
+
+    def method_missing(method, *args, &blk)
+      @proxy.send(method, *args, &blk)
     end
   end
 

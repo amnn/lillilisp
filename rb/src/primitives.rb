@@ -1,11 +1,12 @@
 require 'value'
 require 'evaluator'
+require 'repl'
 
 module Primitives
   extend Value::Helpers
 
   def self.load(env)
-    env.define :exit, prim([]) { raise Evaluator::ExitError }
+    env.define :exit, prim([]) { raise REPL::ExitError }
     env.define :eval, prim([]) { |expr| evaluator.eval(env, expr) }
     env.define :apply, prim([Value::Fn]) { |f, x, *args|
       *prep, rest = args.unshift(x)

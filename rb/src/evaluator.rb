@@ -5,7 +5,6 @@ require 'evaluator/keyword_handler'
 class Evaluator
   EvalError   = LangError.of_type "Runtime"
   TypeError   = LangError.of_type "Type"
-  ExitError   = LangError.of_type "Exit"
   SyntaxError = LangError.of_type "Syntax"
 
   def eval(env, expr)
