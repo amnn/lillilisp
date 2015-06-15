@@ -54,7 +54,7 @@ class Environment
       curr = self
       loop do
         yield curr.map
-        break if curr == curr.parent
+        break if curr.equal? curr.parent
         curr = curr.parent
       end
     end

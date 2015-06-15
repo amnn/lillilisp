@@ -20,4 +20,4 @@
     ((< from to) (cons from (range (inc from) to)))
     ('else       (cons from (range (dec from) to)))))
 
-(puts (sort (range 1 11)))
+(range 1 11)
