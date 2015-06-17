@@ -1,0 +1,4 @@
+[package]
+name    = "lillilisp"
+version = "0.0.1"
+authors = ["Ashok Menon <amenon94@gmail.com>"]
