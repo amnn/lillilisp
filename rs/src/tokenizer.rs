@@ -34,7 +34,24 @@ pub struct Tokenizer<'a> {
     pos   : usize
 }
 
+macro_rules! peek {
+    ($tokenizer : expr, $c : ident; $($($p : pat),+ => $e : expr),* ) => {{
+        while let Some($c) = $tokenizer.peek_char() {
+            match $c { $($($p)|+ => $e),* }
+        }
+    }}
+}
+
+macro_rules! next {
+    ($tokenizer : expr, $c : ident; $($($p : pat),+ => $e : expr),* ) => {{
+        while let Some($c) = $tokenizer.next_char() {
+            match $c { $($($p)|+ => $e),* }
+        }
+    }}
+}
+
 impl<'a> Tokenizer<'a> {
+
     pub fn new(input : &'a str) -> Self {
         Tokenizer { state: State::Ok, input: input, pos: 0 }
     }
@@ -57,12 +74,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn eat_line(&mut self) {
-        while let Some(c) = self.peek_char() {
-            match c {
-                '\n' => break,
-                _    => { self.next_char(); }
-            }
-        }
+        peek!(self, c;
+              '\n' => break,
+              _    => { self.next_char(); }
+        )
     }
 
     fn next_digits(&mut self, init : char, radix : u32) -> Option<i64> {
@@ -70,17 +85,14 @@ impl<'a> Tokenizer<'a> {
             .map(|init| {
                 let mut acc = init as i64;
 
-                while let Some(c) = self.peek_char() {
-                    match c {
-                        '_' => { self.next_char(); }
-                        _   => if let Some(d) = c.to_digit(radix) {
-                            self.next_char();
-                            acc = acc * (radix as i64) + (d as i64);
-                        } else {
-                            break
-                        }
-                    }
-                };
+                peek!(self, c;
+                      '_' => { self.next_char(); },
+                      _   => if let Some(d) = c.to_digit(radix) {
+                          self.next_char();
+                          acc = acc * (radix as i64) + (d as i64);
+                      } else {
+                          break
+                      });
                 acc
             })
     }
@@ -89,46 +101,41 @@ impl<'a> Tokenizer<'a> {
         macro_rules! u { ($c:expr) => { Some($c as char) } }
 
         let mut acc = String::new();
-        while let Some(c) = self.next_char() {
-            match c {
-                '"'  => {
-                    return Some(Str(acc))
-                }
-                '\\' => {
-                    let chm =
-                        self.next_char()
-                        .and_then(|escape : char| -> Option<char> {
-                            match escape {
-                                '0'  => u!(0x0000),
-                                'a'  => u!(0x0007),
-                                'b'  => u!(0x0008),
-                                't'  => u!(0x0009),
-                                'n'  => u!(0x000a),
-                                'v'  => u!(0x000b),
-                                'f'  => u!(0x000c),
-                                '"'  => u!(0x0022),
-                                '\'' => u!(0x0027),
-                                '\\' => u!(0x005c),
-                                'u'  => {
-                                    self.next_char()
-                                        .and_then(|init|
-                                                  self.next_digits(init, 16))
-                                        .and_then(|code|
-                                                  char::from_u32(code as u32))
-                                }
-                                _    => Some(escape)
-                            }
-                        });
+        next!(self, c;
+              '"'  => { return Some(Str(acc)) },
+              '\\' => {
+                  let chm =
+                      self.next_char()
+                      .and_then(|escape : char| -> Option<char> {
+                          match escape {
+                              '0'  => u!(0x0000),
+                              'a'  => u!(0x0007),
+                              'b'  => u!(0x0008),
+                              't'  => u!(0x0009),
+                              'n'  => u!(0x000a),
+                              'v'  => u!(0x000b),
+                              'f'  => u!(0x000c),
+                              '"'  => u!(0x0022),
+                              '\'' => u!(0x0027),
+                              '\\' => u!(0x005c),
+                              'u'  => {
+                                  self.next_char()
+                                      .and_then(|init|
+                                                self.next_digits(init, 16))
+                                      .and_then(|code|
+                                                char::from_u32(code as u32))
+                              }
+                              _    => Some(escape)
+                          }
+                      });
 
-                    if let Some(ch) = chm {acc.push(ch); }
-                    else {
-                        self.state = State::BadEscape;
-                        break;
-                    };
-                }
-                _    => acc.push(c)
-            }
-        }
+                  if let Some(ch) = chm {acc.push(ch); }
+                  else {
+                      self.state = State::BadEscape;
+                      return None;
+                  };
+              },
+              _ => acc.push(c));
 
         self.state = State::UnfinishedStr;
         None
@@ -143,17 +150,13 @@ impl<'a> Tokenizer<'a> {
         let mut name = String::new();
         name.push(init);
 
-        while let Some(c) = self.peek_char() {
-            match c {
-                ' ' | '\t' | '\n' | ',' | ';' |
-                '(' | ')'  | '\'' | '&' | '"'
-                    => break,
-                _   => {
-                    self.next_char();
-                    name.push(c);
-                }
-            }
-        };
+        peek!(self, c;
+              ' ', '\t', '\n', ',', ';',
+              '(', ')', '\'', '&', '"' => break,
+              _ => {
+                  self.next_char();
+                  name.push(c);
+              });
 
         Some(Sym(name))
     }
@@ -165,15 +168,10 @@ impl<'a> Iterator for Tokenizer<'a> {
     fn next(&mut self) -> Option<Tok> {
         if self.state != State::Ok { return None }
 
-        while let Some(c) = self.peek_char() {
-            match c {
-                ' ' | ',' | '\t' | '\n' =>
-                { self.next_char(); }
-                ';' =>
-                { self.eat_line(); }
-                _   => break
-            }
-        }
+        peek!(self, c;
+              ' ', ',', '\t', '\n' => { self.next_char(); },
+              ';' => { self.eat_line(); },
+              _   => break);
 
         self.next_char()
             .and_then(|c| {
