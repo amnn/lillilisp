@@ -2,8 +2,8 @@ use std::cmp::max;
 use std::mem;
 use std::marker::PhantomData;
 
-macro_rules! size  { ($t : ty) => { mem::size_of::<$t>() } }
-macro_rules! align { ($t : ty) => { mem::align_of::<$t>() } }
+macro_rules! size  { ($t : ty) => { mem::size_of::<$t>() as u8 } }
+macro_rules! align { ($t : ty) => { mem::align_of::<$t>() as u8 } }
 
 macro_rules! pack {
     ($t : ty)               => { layout::Packing::<$t>::new() };
@@ -12,8 +12,8 @@ macro_rules! pack {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Packing<T> {
-    pub size : usize,
-    pub align : usize,
+    pub size  : u8,
+    pub align : u8,
     ty : PhantomData<T>
 }
 
@@ -50,8 +50,8 @@ unsafe fn ceil_p2(x : usize, p2 : usize) -> usize {
 }
 
 #[inline(always)]
-unsafe fn align_fwd<U, T>(p : *mut U, align : usize) -> *mut T {
-    ceil_p2(p as usize, align) as *mut T
+unsafe fn align_fwd<U, T>(p : *mut U, align : u8) -> *mut T {
+    ceil_p2(p as usize, align as usize) as *mut T
 }
 
 impl<T> Packing<T> {

@@ -24,7 +24,7 @@ pub struct GC<'a> {
 }
 
 unsafe fn halloc(size : usize) -> *mut u8 {
-    let buf = heap::allocate(size, align!(u8));
+    let buf = heap::allocate(size, mem::align_of::<u8>());
     if buf.is_null() { panic!("Out of memory!"); }
     buf
 }
