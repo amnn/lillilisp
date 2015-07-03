@@ -18,9 +18,10 @@ pub enum Meta<T, L : GCLayout> {
               ty : PhantomData<T> },
 }
 
-pub struct GC<'a> {
+pub struct GC<'a, R, L : GCLayout> {
     pub data : &'a mut [u8],
-    free : *mut u8
+    free : *mut u8,
+    root : Option<*const Meta<R, L>>
 }
 
 unsafe fn halloc(size : usize) -> *mut u8 {
@@ -29,12 +30,22 @@ unsafe fn halloc(size : usize) -> *mut u8 {
     buf
 }
 
-impl<'a> GC<'a> {
+#[inline(always)]
+fn diff<T, U>(p : *mut T, q : *mut U) -> u8 {
+    (q as usize - p as usize) as u8
+}
+
+#[inline(always)]
+fn offset<T, U>(p : *const T, off : u8) -> *mut U {
+    (p as usize + off as usize) as *mut U
+}
+
+impl<'a, R, L : GCLayout> GC<'a, R, L> {
     pub unsafe fn new(size : usize) -> Self {
         let buf = halloc(size);
         GC {
             data: slice::from_raw_parts_mut(buf, size),
-            free: buf
+            free: buf, root: None
         }
     }
 
@@ -54,15 +65,10 @@ impl<'a> GC<'a> {
     ///
     /// The memory allocated is not initialised, merely reserved. The initial
     /// contents must be written by the caller.
-    pub unsafe fn alloc<T : Sized, L : GCLayout>
+    pub unsafe fn alloc<T : Sized>
         (&mut self, tag : L)
          -> *const Meta<T, L>
     {
-        #[inline(always)]
-        fn diff<T, U>(p : *mut T, q : *mut U) -> u8 {
-            (q as usize - p as usize) as u8
-        }
-
         let fwd  = pack!(*const Meta<T, L>);
         let data = pack!(T, fwd);
         let meta = pack!(Meta<T, L>);
@@ -94,15 +100,10 @@ impl<'a> GC<'a> {
 
     /// Convert a pointer to GC Metadata to a pointer to the data it is the
     /// metadata of.
-    pub unsafe fn fetch<T, L : GCLayout>
+    pub unsafe fn fetch<T>
         (mut m : *const Meta<T, L>)
          -> *mut T
     {
-        #[inline(always)]
-        fn offset<T, U>(p : *const T, off : u8) -> *mut U {
-            (p as usize + off as usize) as *mut U
-        }
-
         loop {
             match *m {
                 Header  { off, ..} => return offset(m, off),
