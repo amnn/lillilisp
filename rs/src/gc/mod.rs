@@ -11,7 +11,8 @@ use self::layout::GCLayout;
 use self::Meta::*;
 
 pub enum Meta<T, L : GCLayout> {
-    Header  { size : u8, off : u8, tag : L,
+    Header  { off  : u8, size : u8,
+              algn : u8, tag  : L,
               ty : PhantomData<T> },
     Forward { off : u8,
               ty : PhantomData<T> },
@@ -79,7 +80,8 @@ impl<'a> GC<'a> {
             ptr::write(
                 hdr,
                 Header {
-                    size: data.size as u8,
+                    size: data.size  as u8,
+                    algn: data.align as u8,
                     tag:  tag,
                     off:  diff(hdr, ptr),
                     ty:   PhantomData
