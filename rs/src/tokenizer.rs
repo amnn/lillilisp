@@ -76,8 +76,7 @@ impl<'a> Tokenizer<'a> {
     fn eat_line(&mut self) {
         peek!(self, c;
               '\n' => break,
-              _    => { self.next_char(); }
-        )
+              _    => { self.next_char(); });
     }
 
     fn next_digits(&mut self, init : char, radix : u32) -> Option<i64> {
@@ -115,6 +114,7 @@ impl<'a> Tokenizer<'a> {
                               'n'  => u!(0x000a),
                               'v'  => u!(0x000b),
                               'f'  => u!(0x000c),
+                              'r'  => u!(0x000d),
                               '"'  => u!(0x0022),
                               '\'' => u!(0x0027),
                               '\\' => u!(0x005c),
@@ -169,7 +169,7 @@ impl<'a> Iterator for Tokenizer<'a> {
         if self.state != State::Ok { return None }
 
         peek!(self, c;
-              ' ', ',', '\t', '\n' => { self.next_char(); },
+              ' ', ',', '\t', '\n', '\r' => { self.next_char(); },
               ';' => { self.eat_line(); },
               _   => break);
 
