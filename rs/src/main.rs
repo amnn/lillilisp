@@ -1,8 +1,7 @@
 #![feature(alloc)]
 extern crate alloc;
 
-use std::mem::size_of;
-use gc::{GC, Meta};
+use gc::GC;
 use gc::layout::GCLayout;
 
 impl GCLayout for u8 {

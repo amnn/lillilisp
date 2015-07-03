@@ -11,9 +11,10 @@ use self::layout::GCLayout;
 use self::Meta::*;
 
 pub enum Meta<T, L : GCLayout> {
-    Header  { tag : L, size : u8,
-              ptr : *mut T },
-    Forward { fwd : *const Meta<T, L> },
+    Header  { size : u8, off : u8, tag : L,
+              ty : PhantomData<T> },
+    Forward { off : u8,
+              ty : PhantomData<T> },
 }
 
 pub struct GC<'a> {
@@ -56,7 +57,13 @@ impl<'a> GC<'a> {
         (&mut self, tag : L)
          -> *const Meta<T, L>
     {
-        let data = pack!(T);
+        #[inline(always)]
+        fn diff<T, U>(p : *mut T, q : *mut U) -> u8 {
+            (q as usize - p as usize) as u8
+        }
+
+        let fwd  = pack!(*const Meta<T, L>);
+        let data = pack!(T, fwd);
         let meta = pack!(Meta<T, L>);
 
         loop {
@@ -65,7 +72,7 @@ impl<'a> GC<'a> {
             let end = data.advance(ptr);
 
             if !self.in_buffer(end) {
-                self.make_room(end as usize);
+                self.make_room();
                 continue
             }
 
@@ -74,7 +81,8 @@ impl<'a> GC<'a> {
                 Header {
                     size: data.size as u8,
                     tag:  tag,
-                    ptr:  &mut *ptr,
+                    off:  diff(hdr, ptr),
+                    ty:   PhantomData
                 });
 
             self.free = end;
@@ -88,15 +96,20 @@ impl<'a> GC<'a> {
         (mut m : *const Meta<T, L>)
          -> *mut T
     {
+        #[inline(always)]
+        fn offset<T, U>(p : *const T, off : u8) -> *mut U {
+            (p as usize + off as usize) as *mut U
+        }
+
         loop {
             match *m {
-                Header  { ptr, ..} => return ptr,
-                Forward { fwd }    => m = fwd
+                Header  { off, ..} => return offset(m, off),
+                Forward { off, ..} => m =   *offset(m, off)
             }
         }
     }
 
-    unsafe fn make_room(&mut self, footprint : usize) {
+    unsafe fn make_room(&mut self) {
         unimplemented!()
     }
 

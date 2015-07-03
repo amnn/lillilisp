@@ -1,9 +1,14 @@
+use std::cmp::max;
 use std::mem;
 use std::marker::PhantomData;
 
 macro_rules! size  { ($t : ty) => { mem::size_of::<$t>() } }
 macro_rules! align { ($t : ty) => { mem::align_of::<$t>() } }
-macro_rules! pack  { ($t : ty) => { layout::Packing::<$t>::new() }}
+
+macro_rules! pack {
+    ($t : ty)               => { layout::Packing::<$t>::new() };
+    ($t : ty , $oth : expr) => { layout::Packing::<$t>::at_least($oth) }
+}
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Packing<T> {
@@ -17,6 +22,14 @@ impl<T> Packing<T> {
         Packing {
             size:  size!(T),
             align: align!(T),
+            ty:    PhantomData
+        }
+    }
+
+    pub fn at_least<U>(other : Packing<U>) -> Self {
+        Packing {
+            size:  max(size!(T),  other.size),
+            align: max(align!(T), other.align),
             ty:    PhantomData
         }
     }
