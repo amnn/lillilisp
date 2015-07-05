@@ -1,37 +1,32 @@
 use std::cmp::max;
 use std::mem;
-use std::marker::PhantomData;
 
 macro_rules! size  { ($t : ty) => { mem::size_of::<$t>() as u8 } }
 macro_rules! align { ($t : ty) => { mem::align_of::<$t>() as u8 } }
 
 macro_rules! pack {
-    ($t : ty)               => { layout::Packing::<$t>::new() };
-    ($t : ty , $oth : expr) => { layout::Packing::<$t>::at_least($oth) }
+    ($t : ty)               => { layout::Packing::new::<$t>() };
+    ($t : ty , $oth : expr) => { layout::Packing::at_least::<$t>($oth) }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Packing<T> {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Packing {
     pub size  : u8,
     pub align : u8,
-    ty : PhantomData<T>
 }
 
-impl<T> Packing<T> {
-    pub fn new() -> Self {
-        Packing {
-            size:  size!(T),
-            align: align!(T),
-            ty:    PhantomData
-        }
+impl Packing {
+    pub fn new<T>() -> Self {
+        Packing::raw(size!(T), align!(T))
     }
 
-    pub fn at_least<U>(other : Packing<U>) -> Self {
-        Packing {
-            size:  max(size!(T),  other.size),
-            align: max(align!(T), other.align),
-            ty:    PhantomData
-        }
+    pub fn at_least<T>(other : Packing) -> Self {
+        Packing::raw(max(size!(T),  other.size),
+                     max(align!(T), other.align))
+    }
+
+    pub fn raw(size : u8, align : u8) -> Self {
+        Packing { size: size, align: align, }
     }
 }
 
@@ -54,9 +49,9 @@ unsafe fn align_fwd<U, T>(p : *mut U, align : u8) -> *mut T {
     ceil_p2(p as usize, align as usize) as *mut T
 }
 
-impl<T> Packing<T> {
+impl Packing {
     #[inline]
-    pub unsafe fn reserve_after<U>(&self, p : *mut U) -> *mut T {
+    pub unsafe fn align_after<T, U>(&self, p : *mut U) -> *mut T {
         align_fwd(p, self.align)
     }
 
@@ -67,7 +62,7 @@ impl<T> Packing<T> {
 
     #[inline]
     pub unsafe fn footprint<U>(&self, p : *mut U) -> usize {
-        self.advance(self.reserve_after(p)) as usize - p as usize
+        self.advance::<u8>(self.align_after(p)) as usize - p as usize
     }
 }
 
@@ -86,7 +81,7 @@ impl<'a, T : GCLayout> Iterator for Refs<'a, T> {
     }
 }
 
-pub trait GCLayout : Sized {
+pub trait GCLayout : Sized + Copy + Clone {
     fn get_ref(&self, usize) -> Option<usize>;
     fn refs(&self) -> Refs<Self> {
         Refs { tag: self, pos: 0 }

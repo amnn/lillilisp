@@ -13,14 +13,14 @@ pub mod gc;
 
 fn main() {
     unsafe {
-        let mut gc = GC::new(1<<7);
-        let x = gc.alloc::<u64, u8>(0x11);
-        let y = gc.alloc::<u64, u8>(0x22);
-        let z = gc.alloc::<u64, u8>(0x33);
+        let mut gc = GC::<u8>::new(1<<7);
+        let x = gc.alloc::<u64>(0x11);
+        let y = gc.alloc::<u64>(0x22);
+        let z = gc.alloc::<u64>(0x33);
 
-        *GC::fetch(x) = 0xDEADBEEFBAADCAFE;
-        *GC::fetch(y) = 0xBAADCAFEDEADBEEF;
-        *GC::fetch(z) = 0xDEADBEEFDEADBEEF;
+        *gc.fetch::<u64>(x) = 0xDEADBEEFBAADCAFE;
+        *gc.fetch::<u64>(y) = 0xBAADCAFEDEADBEEF;
+        *gc.fetch::<u64>(z) = 0xDEADBEEFDEADBEEF;
 
         gc.debug();
     }

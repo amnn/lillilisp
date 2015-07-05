@@ -2,26 +2,23 @@
 pub mod layout;
 
 use alloc::heap;
-use std::marker::PhantomData;
 use std::mem;
 use std::ptr;
 use std::slice;
 
-use self::layout::GCLayout;
+use self::layout::{GCLayout, Packing};
 use self::Meta::*;
 
-pub enum Meta<T, L : GCLayout> {
+pub enum Meta<L : GCLayout> {
     Header  { off  : u8, size : u8,
-              algn : u8, tag  : L,
-              ty : PhantomData<T> },
-    Forward { off : u8,
-              ty : PhantomData<T> },
+              algn : u8, tag  : L },
+    Forward { off : u8, },
 }
 
-pub struct GC<'a, R, L : GCLayout> {
+pub struct GC<'a, L : GCLayout> {
     pub data : &'a mut [u8],
     free : *mut u8,
-    root : Option<*const Meta<R, L>>
+    root : Vec<*const Meta<L>>
 }
 
 unsafe fn halloc(size : usize) -> *mut u8 {
@@ -40,12 +37,76 @@ fn offset<T, U>(p : *const T, off : u8) -> *mut U {
     (p as usize + off as usize) as *mut U
 }
 
-impl<'a, R, L : GCLayout> GC<'a, R, L> {
+#[inline(always)]
+unsafe fn end<'a>(data : &'a mut [u8]) -> *mut u8 {
+    data.as_mut_ptr()
+        .offset(data.len() as isize)
+}
+
+#[inline(always)]
+unsafe fn in_buffer<'a, T>(data : &'a mut [u8], ptr : *mut T) -> bool {
+    (ptr as usize) < (end(data) as usize)
+}
+
+#[inline(always)]
+unsafe fn alloc_after<'a, L : GCLayout>
+    (free : *mut u8,
+     buf  : &'a mut [u8],
+     tag  : L,
+     data : &Packing)
+     -> Option<(*mut u8, *const Meta<L>)>
+{
+    let meta = pack!(Meta<L>);
+
+    let hdr = meta.align_after(free);
+    let ptr = data.align_after::<u8, _>(meta.advance(hdr));
+    let end = data.advance(ptr);
+
+    if !in_buffer(buf, end) {
+        None
+    } else {
+        ptr::write(
+            hdr,
+            Header {
+                size: data.size,
+                algn: data.align,
+                tag:  tag,
+                off:  diff(hdr, ptr),
+            });
+        Some((end, hdr))
+    }
+}
+
+#[inline]
+unsafe fn transfer<'a, L : GCLayout>
+    (from     : *const Meta<L>,
+     to       : *mut u8,
+     to_space : &'a mut [u8])
+    -> Option<(*mut u8, *const Meta<L>)>
+{
+    if let Header { size, algn, tag, off, ..} = *from {
+        alloc_after::<L>(
+            to, to_space, tag,
+            &Packing::raw(size, algn))
+            .map(|(end, hdr)| {
+                if let Header { off: new_off, ..} = *hdr {
+                    ptr::copy::<u8>(
+                        offset(from, off),
+                        offset(hdr, new_off),
+                        size as usize)
+                } else { unreachable!() }
+
+                (end, hdr)
+            })
+    } else { unreachable!(); }
+}
+
+impl<'a, L : GCLayout> GC<'a, L> {
     pub unsafe fn new(size : usize) -> Self {
         let buf = halloc(size);
         GC {
             data: slice::from_raw_parts_mut(buf, size),
-            free: buf, root: None
+            free: buf, root: vec![]
         }
     }
 
@@ -67,65 +128,77 @@ impl<'a, R, L : GCLayout> GC<'a, R, L> {
     /// contents must be written by the caller.
     pub unsafe fn alloc<T : Sized>
         (&mut self, tag : L)
-         -> *const Meta<T, L>
+         -> *const Meta<L>
     {
-        let fwd  = pack!(*const Meta<T, L>);
-        let data = pack!(T, fwd);
-        let meta = pack!(Meta<T, L>);
+        let fwd  = pack!(*const Meta<L>);
+        let pack = pack!(T, fwd);
 
+        let mut attempts = 0;
         loop {
-            let hdr = meta.reserve_after(self.free);
-            let ptr = data.reserve_after(meta.advance(hdr));
-            let end = data.advance(ptr);
+            let opt_end =
+                alloc_after(
+                    self.free,
+                    self.data,
+                    tag, &pack);
 
-            if !self.in_buffer(end) {
-                self.make_room();
-                continue
+            if let Some((end, hdr)) = opt_end {
+                self.free = end;
+                return hdr
+            } else if attempts == 0 {
+                self.collect();
+                attempts += 1;
+            } else {
+                self.expand();
             }
-
-            ptr::write(
-                hdr,
-                Header {
-                    size: data.size  as u8,
-                    algn: data.align as u8,
-                    tag:  tag,
-                    off:  diff(hdr, ptr),
-                    ty:   PhantomData
-                });
-
-            self.free = end;
-            return hdr
         }
     }
 
     /// Convert a pointer to GC Metadata to a pointer to the data it is the
     /// metadata of.
     pub unsafe fn fetch<T>
-        (mut m : *const Meta<T, L>)
+        (&self, mut m : *const Meta<L>)
          -> *mut T
     {
         loop {
             match *m {
-                Header  { off, ..} => return offset(m, off),
-                Forward { off, ..} => m =   *offset(m, off)
+                Header  { off, ..} => return        offset(m, off),
+                Forward { off, ..} => m = ptr::read(offset(m, off))
             }
         }
     }
 
-    unsafe fn make_room(&mut self) {
-        unimplemented!()
+    unsafe fn collect(&mut self) {
+        let size     = self.data.len();
+        let free     = halloc(size);
+        let to_space = slice::from_raw_parts_mut(free, size);
+        self.collect_in(free, to_space)
     }
 
-    #[inline(always)]
-    unsafe fn in_buffer<T>(&mut self, ptr : *mut T) -> bool {
-        (ptr as usize) < (self.data_end() as usize)
+    unsafe fn expand(&mut self) {
+        let size     = 2 * self.data.len();
+        let free     = halloc(size);
+        let to_space = slice::from_raw_parts_mut(free, size);
+        self.collect_in(free, to_space)
     }
 
-    #[inline(always)]
-    unsafe fn data_end(&mut self) -> *mut u8 {
-        self.data
-            .as_mut_ptr()
-            .offset(self.data.len() as isize)
+    unsafe fn collect_in
+        (&mut self,
+         mut free : *mut u8,
+         to_space : &'a mut [u8])
+    {
+        let mut explored = free;
+        for r in &mut self.root {
+            let (end, hdr) =
+                transfer(*r, free, to_space)
+                .expect("GC Root Copy failed!");
+
+            *r   = hdr;
+            free = end;
+        }
+
+        while explored < free {
+            unimplemented!();
+        }
     }
 
     pub fn debug(&self) {
